@@ -74,9 +74,19 @@ transcribe_audio() {
         ls -la "$TRANSCRIPT_DIR/$base_name".{txt,srt,vtt} 2>/dev/null | while read -r line; do
             echo -e "${GREEN}  $(echo "$line" | awk '{print $9}')${NC}"
         done
+        
+        # 刪除原始音訊檔案
+        echo -e "${YELLOW}🗑️  清理音訊檔案...${NC}"
+        if rm "$audio_file"; then
+            echo -e "${GREEN}✅ 音訊檔案已刪除: $(basename "$audio_file")${NC}"
+            echo -e "${BLUE}💾 節省儲存空間，僅保留逐字稿${NC}"
+        else
+            echo -e "${RED}❌ 無法刪除音訊檔案: $(basename "$audio_file")${NC}"
+        fi
+        
         return 0
     else
-        echo -e "${RED}❌ 轉錄失敗${NC}"
+        echo -e "${RED}❌ 轉錄失敗，保留音訊檔案以便重試${NC}"
         return 1
     fi
 }
@@ -91,7 +101,7 @@ check_dependencies
 # 檢查參數
 if [ $# -eq 0 ]; then
     echo -e "${YELLOW}📋 使用方法:${NC}"
-    echo "$0 <video_url> [--no-transcribe]"
+    echo "$0 <video_url> [--no-transcribe] [--keep-audio]"
     echo ""
     echo -e "${BLUE}支援平台:${NC}"
     echo "• YouTube (youtube.com, youtu.be)"
@@ -102,24 +112,34 @@ if [ $# -eq 0 ]; then
     echo ""
     echo -e "${YELLOW}參數說明:${NC}"
     echo "• --no-transcribe: 僅下載音訊，不進行轉錄"
+    echo "• --keep-audio: 轉錄完成後保留音訊檔案"
     echo ""
     echo -e "${YELLOW}範例:${NC}"
     echo "$0 'https://www.youtube.com/watch?v=...'"
     echo "$0 'https://www.instagram.com/p/...' --no-transcribe"
+    echo "$0 'https://www.youtube.com/watch?v=...' --keep-audio"
     echo ""
     echo -e "${BLUE}輸出位置:${NC}"
-    echo "• 音訊檔案: $AUDIO_DIR"
     echo "• 逐字稿: $TRANSCRIPT_DIR"
+    echo "• 音訊檔案: 轉錄成功後自動刪除（除非使用 --keep-audio）"
     exit 1
 fi
 
 URL="$1"
 NO_TRANSCRIBE=false
+KEEP_AUDIO=false
 
-# 檢查是否要跳過轉錄
-if [ "$2" = "--no-transcribe" ]; then
-    NO_TRANSCRIBE=true
-fi
+# 檢查參數
+for arg in "$@"; do
+    case $arg in
+        --no-transcribe)
+            NO_TRANSCRIBE=true
+            ;;
+        --keep-audio)
+            KEEP_AUDIO=true
+            ;;
+    esac
+done
 
 # 平台偵測
 if [[ "$URL" == *"instagram.com"* ]]; then
@@ -180,31 +200,84 @@ if [ $? -eq 0 ]; then
     
     if [ ! -z "$NEW_FILE" ]; then
         echo -e "${GREEN}🎵 下載檔案: $(basename "$NEW_FILE")${NC}"
-        echo -e "${BLUE}📁 儲存位置: $AUDIO_DIR${NC}"
+        echo -e "${BLUE}📁 暫存位置: $AUDIO_DIR${NC}"
         
         # 檢查是否要進行轉錄
         if [ "$NO_TRANSCRIBE" = false ]; then
             echo ""
             echo -e "${YELLOW}📝 步驟 2/2: 開始轉錄...${NC}"
             
-            if transcribe_audio "$NEW_FILE"; then
-                echo ""
-                echo -e "${GREEN}🎉 一條龍處理完成！${NC}"
-                echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-                echo -e "${GREEN}📁 音訊檔案: $AUDIO_DIR${NC}"
-                echo -e "${GREEN}📄 逐字稿: $TRANSCRIPT_DIR${NC}"
+            # 修改轉錄函數以支援保留音訊選項
+            if [ "$KEEP_AUDIO" = true ]; then
+                # 臨時修改轉錄函數，不刪除音訊
+                transcribe_audio_keep() {
+                    local audio_file="$1"
+                    local base_name=$(basename "$audio_file" | sed 's/\.[^.]*$//')
+                    
+                    echo -e "${PURPLE}🎤 開始轉錄音訊為文字...${NC}"
+                    echo -e "${BLUE}📁 輸入檔案: $(basename "$audio_file")${NC}"
+                    
+                    # 決定使用哪個 whisper 指令
+                    WHISPER_CMD="whisper"
+                    if ! command -v whisper &> /dev/null; then
+                        if [ -f "/Users/rocker/Library/Python/3.9/bin/whisper" ]; then
+                            WHISPER_CMD="/Users/rocker/Library/Python/3.9/bin/whisper"
+                        fi
+                    fi
+                    
+                    # 使用 Whisper 進行轉錄
+                    "$WHISPER_CMD" "$audio_file" \
+                        --language Chinese \
+                        --model medium \
+                        --output_format txt \
+                        --output_format srt \
+                        --output_format vtt \
+                        --output_dir "$TRANSCRIPT_DIR" \
+                        --verbose False
+                    
+                    if [ $? -eq 0 ]; then
+                        echo -e "${GREEN}✅ 轉錄完成！${NC}"
+                        echo -e "${BLUE}📄 逐字稿檔案:${NC}"
+                        ls -la "$TRANSCRIPT_DIR/$base_name".{txt,srt,vtt} 2>/dev/null | while read -r line; do
+                            echo -e "${GREEN}  $(echo "$line" | awk '{print $9}')${NC}"
+                        done
+                        echo -e "${BLUE}💾 保留音訊檔案: $(basename "$audio_file")${NC}"
+                        return 0
+                    else
+                        echo -e "${RED}❌ 轉錄失敗${NC}"
+                        return 1
+                    fi
+                }
                 
-                # 詢問是否開啟檔案夾
-                echo ""
-                read -p "要開啟逐字稿資料夾嗎？ (y/N): " -n 1 -r
-                echo
-                if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    open "$TRANSCRIPT_DIR"
+                if transcribe_audio_keep "$NEW_FILE"; then
+                    echo ""
+                    echo -e "${GREEN}🎉 一條龍處理完成！${NC}"
+                    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+                    echo -e "${GREEN}🎵 音訊檔案: $AUDIO_DIR${NC}"
+                    echo -e "${GREEN}📄 逐字稿: $TRANSCRIPT_DIR${NC}"
+                else
+                    echo -e "${YELLOW}⚠️  音訊下載成功，但轉錄失敗${NC}"
                 fi
             else
-                echo -e "${YELLOW}⚠️  音訊下載成功，但轉錄失敗${NC}"
-                echo -e "${BLUE}💡 你可以稍後手動轉錄:${NC}"
-                echo "whisper \"$NEW_FILE\" --language Chinese --output_dir \"$TRANSCRIPT_DIR\""
+                if transcribe_audio "$NEW_FILE"; then
+                    echo ""
+                    echo -e "${GREEN}🎉 一條龍處理完成！${NC}"
+                    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+                    echo -e "${GREEN}📄 逐字稿: $TRANSCRIPT_DIR${NC}"
+                    echo -e "${GREEN}💾 已自動清理音訊檔案，節省儲存空間${NC}"
+                else
+                    echo -e "${YELLOW}⚠️  音訊下載成功，但轉錄失敗${NC}"
+                    echo -e "${BLUE}💡 你可以稍後手動轉錄:${NC}"
+                    echo "whisper \"$NEW_FILE\" --language Chinese --output_dir \"$TRANSCRIPT_DIR\""
+                fi
+            fi
+            
+            # 詢問是否開啟檔案夾
+            echo ""
+            read -p "要開啟逐字稿資料夾嗎？ (y/N): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                open "$TRANSCRIPT_DIR"
             fi
         else
             echo -e "${BLUE}ℹ️  跳過轉錄步驟${NC}"
