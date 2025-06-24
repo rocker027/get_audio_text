@@ -42,13 +42,24 @@ check_dependencies() {
     fi
 }
 
-# 轉錄音訊為文字
-transcribe_audio() {
+# 轉錄音訊為文字並重新命名逐字稿
+transcribe_audio_with_rename() {
     local audio_file="$1"
-    local base_name=$(basename "$audio_file" | sed 's/\.[^.]*$//')
+    local original_name="$2"
+    local keep_audio="$3"
+    
+    # 使用時間戳作為暫時的逐字稿檔名
+    local temp_base_name=$(basename "$audio_file" .mp3)
     
     echo -e "${PURPLE}🎤 開始轉錄音訊為文字...${NC}"
-    echo -e "${BLUE}📁 輸入檔案: $(basename "$audio_file")${NC}"
+    echo -e "${BLUE}📁 暫時檔案: $(basename "$audio_file")${NC}"
+    echo -e "${BLUE}🏷️  目標名稱: $original_name${NC}"
+    
+    # 檢查檔案是否存在
+    if [ ! -f "$audio_file" ]; then
+        echo -e "${RED}❌ 音訊檔案不存在: $audio_file${NC}"
+        return 1
+    fi
     
     # 決定使用哪個 whisper 指令
     WHISPER_CMD="whisper"
@@ -68,25 +79,43 @@ transcribe_audio() {
         --output_dir "$TRANSCRIPT_DIR" \
         --verbose False
     
-    if [ $? -eq 0 ]; then
+    local transcribe_result=$?
+    
+    if [ $transcribe_result -eq 0 ]; then
         echo -e "${GREEN}✅ 轉錄完成！${NC}"
-        echo -e "${BLUE}📄 逐字稿檔案:${NC}"
-        ls -la "$TRANSCRIPT_DIR/$base_name".{txt,srt,vtt} 2>/dev/null | while read -r line; do
-            echo -e "${GREEN}  $(echo "$line" | awk '{print $9}')${NC}"
+        
+        # 清理原始名稱中的特殊字元
+        local clean_name=$(echo "$original_name" | sed 's/[<>:"/\\|?*]/_/g')
+        
+        # 重新命名逐字稿檔案
+        for ext in txt srt vtt; do
+            if [ -f "$TRANSCRIPT_DIR/$temp_base_name.$ext" ]; then
+                local new_transcript_file="$TRANSCRIPT_DIR/${clean_name}.$ext"
+                mv "$TRANSCRIPT_DIR/$temp_base_name.$ext" "$new_transcript_file"
+                echo -e "${GREEN}📄 $clean_name.$ext${NC}"
+            fi
         done
         
-        # 刪除原始音訊檔案
-        echo -e "${YELLOW}🗑️  清理音訊檔案...${NC}"
-        if rm "$audio_file"; then
-            echo -e "${GREEN}✅ 音訊檔案已刪除: $(basename "$audio_file")${NC}"
-            echo -e "${BLUE}💾 節省儲存空間，僅保留逐字稿${NC}"
+        # 處理音訊檔案
+        if [ "$keep_audio" = true ]; then
+            # 保留音訊檔案，重新命名為原始名稱
+            local final_audio_file="$AUDIO_DIR/${clean_name}.mp3"
+            mv "$audio_file" "$final_audio_file"
+            echo -e "${BLUE}💾 音訊檔案重新命名為: $(basename "$final_audio_file")${NC}"
         else
-            echo -e "${RED}❌ 無法刪除音訊檔案: $(basename "$audio_file")${NC}"
+            # 刪除音訊檔案
+            echo -e "${YELLOW}🗑️  清理暫時音訊檔案...${NC}"
+            if rm "$audio_file"; then
+                echo -e "${GREEN}✅ 暫時音訊檔案已刪除${NC}"
+                echo -e "${BLUE}💾 節省儲存空間，僅保留逐字稿${NC}"
+            else
+                echo -e "${RED}❌ 無法刪除音訊檔案: $(basename "$audio_file")${NC}"
+            fi
         fi
         
         return 0
     else
-        echo -e "${RED}❌ 轉錄失敗，保留音訊檔案以便重試${NC}"
+        echo -e "${RED}❌ 轉錄失敗，保留暫時音訊檔案以便重試${NC}"
         return 1
     fi
 }
@@ -113,11 +142,13 @@ if [ $# -eq 0 ]; then
     echo -e "${YELLOW}參數說明:${NC}"
     echo "• --no-transcribe: 僅下載音訊，不進行轉錄"
     echo "• --keep-audio: 轉錄完成後保留音訊檔案"
+    echo "• --open-folder: 完成後詢問是否開啟資料夾"
     echo ""
     echo -e "${YELLOW}範例:${NC}"
     echo "$0 'https://www.youtube.com/watch?v=...'"
     echo "$0 'https://www.instagram.com/p/...' --no-transcribe"
     echo "$0 'https://www.youtube.com/watch?v=...' --keep-audio"
+    echo "$0 'https://www.youtube.com/watch?v=...' --open-folder"
     echo ""
     echo -e "${BLUE}輸出位置:${NC}"
     echo "• 逐字稿: $TRANSCRIPT_DIR"
@@ -128,6 +159,7 @@ fi
 URL="$1"
 NO_TRANSCRIBE=false
 KEEP_AUDIO=false
+OPEN_FOLDER=false
 
 # 檢查參數
 for arg in "$@"; do
@@ -137,6 +169,9 @@ for arg in "$@"; do
             ;;
         --keep-audio)
             KEEP_AUDIO=true
+            ;;
+        --open-folder)
+            OPEN_FOLDER=true
             ;;
     esac
 done
@@ -159,15 +194,20 @@ fi
 echo -e "${BLUE}$EMOJI 偵測到 $PLATFORM URL${NC}"
 echo -e "${YELLOW}📥 步驟 1/2: 下載音訊...${NC}"
 
-# 記錄下載前的檔案
-BEFORE_FILES=($(ls "$AUDIO_DIR"/*.mp3 2>/dev/null || true))
+# 生成時間戳檔名
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+TEMP_FILENAME="temp_audio_${TIMESTAMP}"
 
-# 下載音訊
+# 生成時間戳檔名
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+TEMP_FILENAME="temp_audio_${TIMESTAMP}"
+
+# 下載音訊（使用時間戳檔名）
 yt-dlp \
     --extract-audio \
     --audio-format mp3 \
     --audio-quality 0 \
-    --output "$AUDIO_DIR/%(uploader)s - %(title)s.%(ext)s" \
+    --output "$AUDIO_DIR/${TEMP_FILENAME}.%(ext)s" \
     --embed-metadata \
     --add-metadata \
     --ignore-errors \
@@ -175,31 +215,27 @@ yt-dlp \
     --sleep-interval 1 \
     --max-sleep-interval 3 \
     --user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-    "$URL"
+    --print "%(uploader)s - %(title)s" \
+    "$URL" > "$AUDIO_DIR/${TEMP_FILENAME}_info.txt"
 
 # 檢查下載結果
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ 音訊下載完成！${NC}"
     
-    # 找出最新下載的檔案
-    AFTER_FILES=($(ls "$AUDIO_DIR"/*.mp3 2>/dev/null || true))
-    NEW_FILE=""
+    # 檢查時間戳檔案是否存在
+    TEMP_AUDIO_FILE="$AUDIO_DIR/${TEMP_FILENAME}.mp3"
+    INFO_FILE="$AUDIO_DIR/${TEMP_FILENAME}_info.txt"
     
-    # 比較檔案列表找出新檔案
-    for file in "${AFTER_FILES[@]}"; do
-        if [[ ! " ${BEFORE_FILES[@]} " =~ " ${file} " ]]; then
-            NEW_FILE="$file"
-            break
+    if [ -f "$TEMP_AUDIO_FILE" ]; then
+        # 讀取原始檔案資訊
+        if [ -f "$INFO_FILE" ]; then
+            ORIGINAL_NAME=$(cat "$INFO_FILE" | head -1)
+            echo -e "${GREEN}🎵 原始標題: $ORIGINAL_NAME${NC}"
+        else
+            ORIGINAL_NAME="Unknown"
         fi
-    done
-    
-    if [ -z "$NEW_FILE" ]; then
-        # 如果找不到新檔案，使用最新的檔案
-        NEW_FILE=$(ls -t "$AUDIO_DIR"/*.mp3 2>/dev/null | head -1)
-    fi
-    
-    if [ ! -z "$NEW_FILE" ]; then
-        echo -e "${GREEN}🎵 下載檔案: $(basename "$NEW_FILE")${NC}"
+        
+        echo -e "${BLUE}📁 暫時檔案: ${TEMP_FILENAME}.mp3${NC}"
         echo -e "${BLUE}📁 暫存位置: $AUDIO_DIR${NC}"
         
         # 檢查是否要進行轉錄
@@ -207,49 +243,9 @@ if [ $? -eq 0 ]; then
             echo ""
             echo -e "${YELLOW}📝 步驟 2/2: 開始轉錄...${NC}"
             
-            # 修改轉錄函數以支援保留音訊選項
             if [ "$KEEP_AUDIO" = true ]; then
-                # 臨時修改轉錄函數，不刪除音訊
-                transcribe_audio_keep() {
-                    local audio_file="$1"
-                    local base_name=$(basename "$audio_file" | sed 's/\.[^.]*$//')
-                    
-                    echo -e "${PURPLE}🎤 開始轉錄音訊為文字...${NC}"
-                    echo -e "${BLUE}📁 輸入檔案: $(basename "$audio_file")${NC}"
-                    
-                    # 決定使用哪個 whisper 指令
-                    WHISPER_CMD="whisper"
-                    if ! command -v whisper &> /dev/null; then
-                        if [ -f "/Users/rocker/Library/Python/3.9/bin/whisper" ]; then
-                            WHISPER_CMD="/Users/rocker/Library/Python/3.9/bin/whisper"
-                        fi
-                    fi
-                    
-                    # 使用 Whisper 進行轉錄
-                    "$WHISPER_CMD" "$audio_file" \
-                        --language Chinese \
-                        --model medium \
-                        --output_format txt \
-                        --output_format srt \
-                        --output_format vtt \
-                        --output_dir "$TRANSCRIPT_DIR" \
-                        --verbose False
-                    
-                    if [ $? -eq 0 ]; then
-                        echo -e "${GREEN}✅ 轉錄完成！${NC}"
-                        echo -e "${BLUE}📄 逐字稿檔案:${NC}"
-                        ls -la "$TRANSCRIPT_DIR/$base_name".{txt,srt,vtt} 2>/dev/null | while read -r line; do
-                            echo -e "${GREEN}  $(echo "$line" | awk '{print $9}')${NC}"
-                        done
-                        echo -e "${BLUE}💾 保留音訊檔案: $(basename "$audio_file")${NC}"
-                        return 0
-                    else
-                        echo -e "${RED}❌ 轉錄失敗${NC}"
-                        return 1
-                    fi
-                }
-                
-                if transcribe_audio_keep "$NEW_FILE"; then
+                # 轉錄但保留音訊
+                if transcribe_audio_with_rename "$TEMP_AUDIO_FILE" "$ORIGINAL_NAME" true; then
                     echo ""
                     echo -e "${GREEN}🎉 一條龍處理完成！${NC}"
                     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -259,7 +255,8 @@ if [ $? -eq 0 ]; then
                     echo -e "${YELLOW}⚠️  音訊下載成功，但轉錄失敗${NC}"
                 fi
             else
-                if transcribe_audio "$NEW_FILE"; then
+                # 轉錄並刪除音訊
+                if transcribe_audio_with_rename "$TEMP_AUDIO_FILE" "$ORIGINAL_NAME" false; then
                     echo ""
                     echo -e "${GREEN}🎉 一條龍處理完成！${NC}"
                     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -268,29 +265,51 @@ if [ $? -eq 0 ]; then
                 else
                     echo -e "${YELLOW}⚠️  音訊下載成功，但轉錄失敗${NC}"
                     echo -e "${BLUE}💡 你可以稍後手動轉錄:${NC}"
-                    echo "whisper \"$NEW_FILE\" --language Chinese --output_dir \"$TRANSCRIPT_DIR\""
+                    echo "whisper \"$TEMP_AUDIO_FILE\" --language Chinese --output_dir \"$TRANSCRIPT_DIR\""
                 fi
             fi
             
-            # 詢問是否開啟檔案夾
-            echo ""
-            read -p "要開啟逐字稿資料夾嗎？ (y/N): " -n 1 -r
-            echo
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                open "$TRANSCRIPT_DIR"
+            # 清理資訊檔案
+            rm -f "$INFO_FILE"
+            
+            # 只有使用 --open-folder 參數時才詢問
+            if [ "$OPEN_FOLDER" = true ]; then
+                echo ""
+                read -p "要開啟逐字稿資料夾嗎？ (y/N): " -n 1 -r
+                echo
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    open "$TRANSCRIPT_DIR"
+                fi
             fi
         else
             echo -e "${BLUE}ℹ️  跳過轉錄步驟${NC}"
-            # 詢問是否開啟音訊資料夾
-            echo ""
-            read -p "要開啟音訊資料夾嗎？ (y/N): " -n 1 -r
-            echo
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                open "$AUDIO_DIR"
+            
+            # 如果不轉錄，將暫時檔案重新命名為原始名稱
+            if [ "$ORIGINAL_NAME" != "Unknown" ]; then
+                # 清理檔名中的特殊字元
+                CLEAN_NAME=$(echo "$ORIGINAL_NAME" | sed 's/[<>:"/\\|?*]/_/g')
+                FINAL_AUDIO_FILE="$AUDIO_DIR/${CLEAN_NAME}.mp3"
+                mv "$TEMP_AUDIO_FILE" "$FINAL_AUDIO_FILE"
+                echo -e "${GREEN}📁 檔案已重新命名為: $(basename "$FINAL_AUDIO_FILE")${NC}"
+            fi
+            
+            # 清理資訊檔案
+            rm -f "$INFO_FILE"
+            
+            # 只有使用 --open-folder 參數時才詢問
+            if [ "$OPEN_FOLDER" = true ]; then
+                echo ""
+                read -p "要開啟音訊資料夾嗎？ (y/N): " -n 1 -r
+                echo
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    open "$AUDIO_DIR"
+                fi
             fi
         fi
     else
-        echo -e "${YELLOW}⚠️  找不到下載的檔案${NC}"
+        echo -e "${YELLOW}⚠️  找不到下載的檔案: $TEMP_AUDIO_FILE${NC}"
+        # 清理資訊檔案
+        rm -f "$INFO_FILE"
     fi
 else
     echo -e "${RED}❌ 音訊下載失敗${NC}"
