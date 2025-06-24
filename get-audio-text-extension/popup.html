@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    h1 {
+      margin: 0 0 15px 0;
+      font-size: 18px;
+      color: #333;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    
+    .supported {
+      background: #e8f5e8;
+      color: #2e7d32;
+    }
+    
+    .not-supported {
+      background: #ffebee;
+      color: #c62828;
+    }
+    
+    .instructions {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎵 Get Audio Text</h1>
+  <div id="status" class="status">
+    <div id="status-text">檢查中...</div>
+  </div>
+  <div class="instructions">
+    <p><strong>支援的網站：</strong></p>
+    <ul>
+      <li>YouTube</li>
+      <li>Instagram</li>
+      <li>TikTok</li>
+    </ul>
+    <p>在支援的網站上，點擊右上角的「轉錄」按鈕即可開始。</p>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "name": "Get Audio Text",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "description": "純前端一鍵下載影片音訊並轉錄成文字",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "downloads"
+  ],
+  
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://www.instagram.com/*",
+    "https://www.tiktok.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://www.instagram.com/*",
+        "https://www.tiktok.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Get Audio Text"
+  },
+  
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
