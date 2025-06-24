@@ -1,12 +1,11 @@
 #!/bin/bash
 
 # 設定目錄
-AUDIO_DIR="/Users/rocker/Downloads/CaptureAudio"
-TRANSCRIPT_DIR="/Users/rocker/Downloads/CaptureAudio/Transcripts"
+AUDIO_DIR="abs_path_to_audio_dir"
 
 # 建立目錄（如果不存在）
 mkdir -p "$AUDIO_DIR"
-mkdir -p "$TRANSCRIPT_DIR"
+mkdir -p "$AUDIO_DIR/Transcripts"
 
 # 顏色輸出
 RED='\033[0;31m'
