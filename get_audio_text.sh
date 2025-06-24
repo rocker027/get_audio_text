@@ -202,6 +202,20 @@ TEMP_FILENAME="temp_audio_${TIMESTAMP}"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 TEMP_FILENAME="temp_audio_${TIMESTAMP}"
 
+# 記錄下載前的檔案
+BEFORE_FILES=($(ls "$AUDIO_DIR"/*.mp3 2>/dev/null || true))
+
+# 先獲取影片資訊
+echo -e "${BLUE}🔍 獲取影片資訊...${NC}"
+VIDEO_INFO=$(yt-dlp --print "%(uploader)s - %(title)s" "$URL" 2>/dev/null)
+if [ $? -eq 0 ] && [ ! -z "$VIDEO_INFO" ]; then
+    echo -e "${GREEN}🏷️  原始標題: $VIDEO_INFO${NC}"
+    echo "$VIDEO_INFO" > "$AUDIO_DIR/${TEMP_FILENAME}_info.txt"
+else
+    echo -e "${YELLOW}⚠️  無法獲取影片資訊，使用時間戳作為標題${NC}"
+    echo "Unknown_${TIMESTAMP}" > "$AUDIO_DIR/${TEMP_FILENAME}_info.txt"
+fi
+
 # 下載音訊（使用時間戳檔名）
 yt-dlp \
     --extract-audio \
@@ -215,8 +229,7 @@ yt-dlp \
     --sleep-interval 1 \
     --max-sleep-interval 3 \
     --user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-    --print "%(uploader)s - %(title)s" \
-    "$URL" > "$AUDIO_DIR/${TEMP_FILENAME}_info.txt"
+    "$URL"
 
 # 檢查下載結果
 if [ $? -eq 0 ]; then
@@ -226,16 +239,46 @@ if [ $? -eq 0 ]; then
     TEMP_AUDIO_FILE="$AUDIO_DIR/${TEMP_FILENAME}.mp3"
     INFO_FILE="$AUDIO_DIR/${TEMP_FILENAME}_info.txt"
     
+    # 如果時間戳檔案不存在，查找最新下載的檔案
+    if [ ! -f "$TEMP_AUDIO_FILE" ]; then
+        echo -e "${YELLOW}⚠️  時間戳檔案不存在，查找實際下載的檔案...${NC}"
+        
+        # 找出新增的檔案
+        AFTER_FILES=($(ls "$AUDIO_DIR"/*.mp3 2>/dev/null || true))
+        ACTUAL_FILE=""
+        
+        for file in "${AFTER_FILES[@]}"; do
+            if [[ ! " ${BEFORE_FILES[@]} " =~ " ${file} " ]]; then
+                ACTUAL_FILE="$file"
+                break
+            fi
+        done
+        
+        if [ ! -z "$ACTUAL_FILE" ]; then
+            echo -e "${BLUE}📁 實際下載檔案: $(basename "$ACTUAL_FILE")${NC}"
+            # 將實際檔案重新命名為時間戳檔案
+            mv "$ACTUAL_FILE" "$TEMP_AUDIO_FILE"
+            echo -e "${GREEN}📝 已重新命名為: $(basename "$TEMP_AUDIO_FILE")${NC}"
+        else
+            echo -e "${RED}❌ 找不到下載的檔案${NC}"
+            rm -f "$INFO_FILE"
+            exit 1
+        fi
+    fi
+    
     if [ -f "$TEMP_AUDIO_FILE" ]; then
         # 讀取原始檔案資訊
         if [ -f "$INFO_FILE" ]; then
             ORIGINAL_NAME=$(cat "$INFO_FILE" | head -1)
-            echo -e "${GREEN}🎵 原始標題: $ORIGINAL_NAME${NC}"
+            if [ -z "$ORIGINAL_NAME" ]; then
+                ORIGINAL_NAME="Unknown_${TIMESTAMP}"
+            fi
         else
-            ORIGINAL_NAME="Unknown"
+            ORIGINAL_NAME="Unknown_${TIMESTAMP}"
         fi
         
-        echo -e "${BLUE}📁 暫時檔案: ${TEMP_FILENAME}.mp3${NC}"
+        echo -e "${GREEN}🏷️  原始標題: $ORIGINAL_NAME${NC}"
+        echo -e "${BLUE}📁 暫時檔案: $(basename "$TEMP_AUDIO_FILE")${NC}"
         echo -e "${BLUE}📁 暫存位置: $AUDIO_DIR${NC}"
         
         # 檢查是否要進行轉錄
@@ -285,7 +328,7 @@ if [ $? -eq 0 ]; then
             echo -e "${BLUE}ℹ️  跳過轉錄步驟${NC}"
             
             # 如果不轉錄，將暫時檔案重新命名為原始名稱
-            if [ "$ORIGINAL_NAME" != "Unknown" ]; then
+            if [ "$ORIGINAL_NAME" != "Unknown_${TIMESTAMP}" ]; then
                 # 清理檔名中的特殊字元
                 CLEAN_NAME=$(echo "$ORIGINAL_NAME" | sed 's/[<>:"/\\|?*]/_/g')
                 FINAL_AUDIO_FILE="$AUDIO_DIR/${CLEAN_NAME}.mp3"
