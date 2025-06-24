@@ -38,8 +38,8 @@ pip3 install openai-whisper
 
 ```bash
 # 建立工具目錄
-mkdir -p ~/Documents/sh
-cd ~/Documents/sh
+mkdir -p ~/get_audio_text
+cd ~/get_audio_text
 
 # 下載腳本
 curl -o get_audio_text.sh https://your-repo-url/get_audio_text.sh
@@ -59,7 +59,7 @@ sed -i 's|abs_path_to_audio_dir|/Users/$USER/Downloads/CaptureAudio|g' get_audio
 
 ```bash
 # 建立符號連結，可在任何地方使用
-sudo ln -s ~/Documents/sh/get_audio_text.sh /usr/local/bin/get_audio_text
+sudo ln -s ~/get_audio_text.sh /usr/local/bin/get_audio_text
 ```
 
 ## 🚀 使用方法
