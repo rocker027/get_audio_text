@@ -215,15 +215,92 @@ const CONFIG = {
 
 ---
 
-**注意**: 此為示範版本，提供完整的 UI 交互體驗。實際的音訊提取和轉錄功能需要額外的後端服務支援。
+**重要**: 此版本支援**真實音訊轉錄**功能，通過 Native Messaging 整合本地 `get_audio_text.sh` 腳本。
 
-## Whisper wasm 整合說明
+## 🔧 Native Messaging 整合
 
-1. 下載 whisper.cpp wasm release 的 `whisper-worker.js`、`whisper.wasm`、`models/ggml-tiny.en.bin`。
-2. 將 `whisper-worker.js` 放在本資料夾，`whisper.wasm` 及模型放在 `models/`。
-3. manifest.json 已設定 web_accessible_resources 權限。
-4. content.js 會自動呼叫 worker 進行語音辨識。
+此版本實現了與本地 `get_audio_text.sh` 腳本的完整整合，提供真實的音訊轉錄功能。
 
-### 參考資源
-- https://github.com/ggerganov/whisper.cpp
-- https://github.com/ffreemt/whisper-wasm
+### 🚀 快速開始
+
+#### 1. 安裝 Native Host
+```bash
+cd native-host
+./install.sh
+```
+
+#### 2. 配置音訊目錄
+確保 `get_audio_text.sh` 中的 `AUDIO_DIR` 已設置為正確路徑：
+```bash
+# 編輯主腳本
+nano ../get_audio_text.sh
+
+# 設置音訊目錄（替換為實際路徑）
+AUDIO_DIR="/Users/yourusername/Downloads/AudioCapture"
+```
+
+#### 3. 檢查依賴
+```bash
+# 確認必要工具已安裝
+yt-dlp --version
+ffmpeg -version
+whisper --help
+
+# 如果沒有安裝：
+brew install yt-dlp ffmpeg
+pip3 install openai-whisper
+```
+
+#### 4. 重新載入擴展
+1. 前往 `chrome://extensions/`
+2. 點擊 Get Audio Text 的「重新載入」按鈕
+
+### 🎯 使用方式
+
+1. **前往支援的影片網站**（YouTube、Instagram、TikTok）
+2. **點擊轉錄按鈕**：會出現在頁面右上角
+3. **等待處理完成**：
+   - 自動檢查系統依賴
+   - 下載影片音訊
+   - 執行語音轉錄
+   - 下載轉錄文字檔案
+
+### 📊 功能特色
+
+- ✅ **真實音訊處理**：使用 yt-dlp 下載真實影片音訊
+- ✅ **高品質轉錄**：透過 OpenAI Whisper 進行語音辨識
+- ✅ **本地處理**：保護隱私，不上傳到雲端
+- ✅ **進度追蹤**：即時顯示處理進度
+- ✅ **自動回退**：如果本地處理失敗，自動使用模擬模式
+- ✅ **多平台支援**：YouTube、Instagram、TikTok
+
+### 🔧 故障排除
+
+如果遇到問題，請查看：
+
+1. **Native Host 安裝指南**：`native-host/README.md`
+2. **日誌檔案**：`~/get_audio_text_host.log`
+3. **Chrome 開發者工具**：檢查 Console 錯誤訊息
+
+### 📁 專案結構
+
+```
+get-audio-text-extension/
+├── native-host/                 # Native Messaging 組件
+│   ├── get_audio_text_host.py  # Python 橋接程序
+│   ├── host_manifest.json      # Native Host 配置
+│   ├── install.sh              # 自動安裝腳本
+│   └── README.md               # 詳細安裝說明
+├── manifest.json               # 擴展配置（含 nativeMessaging 權限）
+├── content.js                  # 主要邏輯（整合 Native Messaging）
+├── content.css                 # 樣式
+├── popup.html/js               # 彈出視窗
+└── README.md                   # 本檔案
+```
+
+### 🔄 技術原理
+
+1. **Chrome 擴展** 通過 `chrome.runtime.sendNativeMessage()` 發送請求
+2. **Python 橋接程序** 接收請求並調用本地腳本
+3. **get_audio_text.sh** 執行實際的音訊下載和轉錄
+4. **結果回傳** 給 Chrome 擴展並提供下載

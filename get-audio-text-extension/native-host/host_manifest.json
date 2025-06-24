@@ -1,0 +1,9 @@
+{
+  "name": "com.get_audio_text.host",
+  "description": "Get Audio Text Native Host",
+  "path": "/Users/rocker/Documents/get_audio_text/get-audio-text-extension/native-host/get_audio_text_host.py",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://kljgikdggncpdpjkdeihhfeaocnoikbn/"
+  ]
+}

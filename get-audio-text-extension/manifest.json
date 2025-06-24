@@ -7,15 +7,14 @@
   "permissions": [
     "activeTab",
     "storage",
-    "downloads"
+    "downloads",
+    "nativeMessaging"
   ],
   
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://www.instagram.com/*",
-    "https://www.tiktok.com/*",
-    "https://huggingface.co/*",
-    "https://github.com/*"
+    "https://www.tiktok.com/*"
   ],
   
   "background": {
@@ -37,12 +36,5 @@
   "action": {
     "default_popup": "popup.html",
     "default_title": "Get Audio Text"
-  },
-
-  "web_accessible_resources": [
-    {
-      "resources": ["whisper-worker.js", "models/*"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }
