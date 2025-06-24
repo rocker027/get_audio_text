@@ -17,4 +17,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true; // 保持消息通道開放
   }
+
+  if (request.type === 'downloadModel') {
+    fetch(request.url)
+      .then(resp => resp.arrayBuffer())
+      .then(buf => {
+        sendResponse({ success: true, buffer: buf });
+      })
+      .catch(e => {
+        sendResponse({ success: false, error: e.message });
+      });
+    return true; // async response
+  }
 });

@@ -216,3 +216,14 @@ const CONFIG = {
 ---
 
 **注意**: 此為示範版本，提供完整的 UI 交互體驗。實際的音訊提取和轉錄功能需要額外的後端服務支援。
+
+## Whisper wasm 整合說明
+
+1. 下載 whisper.cpp wasm release 的 `whisper-worker.js`、`whisper.wasm`、`models/ggml-tiny.en.bin`。
+2. 將 `whisper-worker.js` 放在本資料夾，`whisper.wasm` 及模型放在 `models/`。
+3. manifest.json 已設定 web_accessible_resources 權限。
+4. content.js 會自動呼叫 worker 進行語音辨識。
+
+### 參考資源
+- https://github.com/ggerganov/whisper.cpp
+- https://github.com/ffreemt/whisper-wasm
