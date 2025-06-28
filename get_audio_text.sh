@@ -130,12 +130,13 @@ check_dependencies
 # 檢查參數
 if [ $# -eq 0 ]; then
     echo -e "${YELLOW}📋 使用方法:${NC}"
-    echo "$0 <video_url> [--no-transcribe] [--keep-audio]"
+    echo "$0 <video_url_or_file_path> [--no-transcribe] [--keep-audio]"
     echo ""
     echo -e "${BLUE}支援平台:${NC}"
     echo "• YouTube (youtube.com, youtu.be)"
     echo "• Instagram (instagram.com) - 僅公開內容"
     echo "• TikTok"
+    echo "• 本地檔案路徑"
     echo "• Facebook"
     echo "• 其他 yt-dlp 支援的平台"
     echo ""
@@ -148,7 +149,8 @@ if [ $# -eq 0 ]; then
     echo "$0 'https://www.youtube.com/watch?v=...'"
     echo "$0 'https://www.instagram.com/p/...' --no-transcribe"
     echo "$0 'https://www.youtube.com/watch?v=...' --keep-audio"
-    echo "$0 'https://www.youtube.com/watch?v=...' --open-folder"
+    echo "$0 '/path/to/local_video.mp4'"
+    echo "$0 'local_video.mp4' # 假設影片位於當前目錄"
     echo ""
     echo -e "${BLUE}輸出位置:${NC}"
     echo "• 逐字稿: $TRANSCRIPT_DIR"
@@ -160,6 +162,13 @@ URL="$1"
 NO_TRANSCRIBE=false
 KEEP_AUDIO=false
 OPEN_FOLDER=false
+
+# 檢查是否為檔案路徑
+if [ -f "$URL" ]; then
+    IS_FILE=true
+else
+    IS_FILE=false
+fi
 
 # 檢查參數
 for arg in "$@"; do
@@ -216,28 +225,41 @@ else
     echo "Unknown_${TIMESTAMP}" > "$AUDIO_DIR/${TEMP_FILENAME}_info.txt"
 fi
 
-# 下載音訊（使用時間戳檔名）
-yt-dlp \
-    --extract-audio \
-    --audio-format mp3 \
-    --audio-quality 0 \
-    --output "$AUDIO_DIR/${TEMP_FILENAME}.%(ext)s" \
-    --embed-metadata \
-    --add-metadata \
-    --ignore-errors \
-    --no-playlist \
-    --sleep-interval 1 \
-    --max-sleep-interval 3 \
-    --user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-    "$URL"
+# 處理檔案或下載音訊
+if [ "$IS_FILE" = true ]; then
+    echo -e "${BLUE}📁 使用本地檔案: $URL${NC}"
+    TEMP_AUDIO_FILE="$URL"
+    ORIGINAL_NAME=$(basename "$URL")
+else
+    # 下載音訊（使用時間戳檔名）
+    yt-dlp \
+        --extract-audio \
+        --audio-format mp3 \
+        --audio-quality 0 \
+        --output "$AUDIO_DIR/${TEMP_FILENAME}.%(ext)s" \
+        --embed-metadata \
+        --add-metadata \
+        --ignore-errors \
+        --no-playlist \
+        --sleep-interval 1 \
+        --max-sleep-interval 3 \
+        --user-agent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+        "$URL"
+fi
 
-# 檢查下載結果
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ 音訊下載完成！${NC}"
-    
-    # 檢查時間戳檔案是否存在
-    TEMP_AUDIO_FILE="$AUDIO_DIR/${TEMP_FILENAME}.mp3"
-    INFO_FILE="$AUDIO_DIR/${TEMP_FILENAME}_info.txt"
+# 檢查檔案是否存在或下載結果
+if [ "$IS_FILE" = true ] || [ $? -eq 0 ]; then
+    if [ "$IS_FILE" = true ]; then
+        echo -e "${GREEN}✅ 使用本地檔案: $URL${NC}"
+        TEMP_AUDIO_FILE="$URL"
+        ORIGINAL_NAME=$(basename "$URL")
+    else
+        echo -e "${GREEN}✅ 音訊下載完成！${NC}"
+        
+        # 檢查時間戳檔案是否存在
+        TEMP_AUDIO_FILE="$AUDIO_DIR/${TEMP_FILENAME}.mp3"
+        INFO_FILE="$AUDIO_DIR/${TEMP_FILENAME}_info.txt"
+    fi
     
     # 如果時間戳檔案不存在，查找最新下載的檔案
     if [ ! -f "$TEMP_AUDIO_FILE" ]; then
@@ -355,15 +377,19 @@ if [ $? -eq 0 ]; then
         rm -f "$INFO_FILE"
     fi
 else
-    echo -e "${RED}❌ 音訊下載失敗${NC}"
-    echo -e "${YELLOW}💡 可能原因:${NC}"
-    echo "• URL 格式錯誤"
-    echo "• 網路連線問題"
-    echo "• 影片為私人內容"
-    echo "• 影片已被刪除"
-    echo ""
-    echo -e "${YELLOW}🔧 建議:${NC}"
-    echo "• 確認 URL 完整且正確"
-    echo "• 確認內容為公開可存取"
-    echo "• 檢查網路連線"
+    if [ "$IS_FILE" = true ]; then
+        echo -e "${RED}❌ 本地檔案不存在: $URL${NC}"
+    else
+        echo -e "${RED}❌ 音訊下載失敗${NC}"
+        echo -e "${YELLOW}💡 可能原因:${NC}"
+        echo "• URL 格式錯誤"
+        echo "• 網路連線問題"
+        echo "• 影片為私人內容"
+        echo "• 影片已被刪除"
+        echo ""
+        echo -e "${YELLOW}🔧 建議:${NC}"
+        echo "• 確認 URL 完整且正確"
+        echo "• 確認內容為公開可存取"
+        echo "• 檢查網路連線"
+    fi
 fi

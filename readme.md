@@ -74,6 +74,16 @@ sudo ln -s ~/get_audio_text.sh /usr/local/bin/get_audio_text
 get_audio_text "https://www.instagram.com/p/POST_ID/"
 ```
 
+### 使用本地檔案
+
+```bash
+# 轉錄本地影片檔案
+./get_audio_text.sh "/path/to/local_video.mp4"
+
+# 假設影片位於當前目錄
+./get_audio_text.sh "local_video.mp4"
+```
+
 ### 進階選項
 
 ```bash

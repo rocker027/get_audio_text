@@ -206,9 +206,14 @@ def main():
                 if not url:
                     send_message({"success": False, "error": "缺少 URL 參數"})
                     continue
-                
-                # 處理轉錄請求
-                result = process_audio_transcription(url, options)
+
+                # 驗證 URL 是否為有效的 URL 或檔案路徑
+                if os.path.exists(url):
+                    # 處理檔案路徑
+                    result = process_audio_transcription(url, options)
+                else:
+                    # 處理轉錄請求
+                    result = process_audio_transcription(url, options)
                 send_message(result)
                 
             elif message.get("action") == "check_dependencies":
