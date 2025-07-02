@@ -20,6 +20,8 @@ This project (`get_audio_text`) is a technical tool designed for personal learni
 
 ---
 
+[繁體中文版本 README.zh-TW.md](README.zh-TW.md)
+
 # Get Audio Text 🎵→📝
 
 ![CleanShot 2025-07-02 at 21 57 13@2x](https://github.com/user-attachments/assets/465b17ca-186a-41e2-b77c-a7f39309cd93)
