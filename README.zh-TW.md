@@ -483,6 +483,9 @@ python3 -m http.server 8000 --cgi
 
 本專案採用 **MIT 授權條款**。您可以自由使用、修改和分發。
 
+-   [完整的 MIT 授權條款 (繁體中文)](LICENSE.zh-TW.md)
+-   [專案行為準則 (繁體中文)](CODE_OF_CONDUCT.zh-TW.md)
+
 ### 重要聲明
 
 - ⚖️ **法律合規**：請遵守各平台的使用條款。
