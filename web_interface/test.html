@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGI 測試頁面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 CGI 環境測試</h1>
+        <p>點擊下方按鈕測試 CGI 環境是否正常運作：</p>
+        
+        <button class="test-btn" onclick="testCGI()">測試 CGI 環境</button>
+        <button class="test-btn" onclick="testProcessCGI()">測試處理腳本</button>
+        <button class="test-btn" onclick="testHello()">測試基本 Hello</button>
+        <button class="test-btn" onclick="testHello2()">測試 Homebrew Python</button>
+        <button class="test-btn" onclick="testHello3()">測試系統 Python</button>
+        <button class="test-btn" onclick="testDebug()">測試調試信息</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testCGI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = '測試中...';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch('cgi-bin/test.py', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'test=true'
+                });
+                
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                resultDiv.className = 'result ' + (data.status === 'success' ? 'success' : 'error');
+                
+            } catch (error) {
+                resultDiv.textContent = `測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testProcessCGI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = '測試處理腳本中...';
+            resultDiv.className = 'result';
+            
+            try {
+                const formData = new FormData();
+                formData.append('url', 'test');
+                
+                const response = await fetch('cgi-bin/process.py', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const text = await response.text();
+                resultDiv.textContent = text;
+                resultDiv.className = 'result ' + (text.includes('error') ? 'error' : 'success');
+                
+            } catch (error) {
+                resultDiv.textContent = `處理腳本測試失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        async function testHello() {
+            await testSimpleCGI('cgi-bin/hello.py', '測試基本 Hello');
+        }
+        
+        async function testHello2() {
+            await testSimpleCGI('cgi-bin/hello2.py', '測試 Homebrew Python');
+        }
+        
+        async function testHello3() {
+            await testSimpleCGI('cgi-bin/hello3.py', '測試系統 Python');
+        }
+        
+        async function testDebug() {
+            await testSimpleCGI('cgi-bin/debug.py', '測試調試信息');
+        }
+        
+        async function testSimpleCGI(url, testName) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = `${testName}中...`;
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                if (response.ok && text.trim()) {
+                    resultDiv.innerHTML = text;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.textContent = `${testName}失敗: ${response.status} ${response.statusText}`;
+                    resultDiv.className = 'result error';
+                }
+                
+            } catch (error) {
+                resultDiv.textContent = `${testName}失敗: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>

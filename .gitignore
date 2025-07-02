@@ -1,0 +1,54 @@
+# Claude AI 相關資料夾和檔案
+.claude/
+.cursor/
+.serena/
+CLAUDE.md
+GEMINI.md
+
+# 作業系統相關
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 臨時檔案
+*.tmp
+*.temp
+*.log
+
+# 音頻和影片檔案
+*.mp3
+*.mp4
+*.wav
+*.flac
+*.aac
+*.ogg
+*.m4a
+*.wma
+*.opus
+*.avi
+*.mkv
+*.mov
+*.wmv
+*.flv
+*.webm
+*.m4v
+*.3gp
+*.ogv
+
+# 逐字稿檔案
+*.vtt
+*.srt
+
+# 上傳暫存
+uploads/
+*.pyc
+__pycache__/
+
+# 備份檔案
+*.backup
+*.bak
+get_audio_text.sh.backup.*

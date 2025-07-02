@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音頻轉錄工具 - Audio Transcription Tool</title>
+    <link rel="stylesheet" href="static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 音頻轉錄工具</h1>
+            <p>支援 YouTube、Instagram、TikTok 等平台，以及本地音頻/影片檔案</p>
+        </header>
+
+        <main>
+            <form id="transcriptionForm" enctype="multipart/form-data">
+                <!-- 輸入區域 -->
+                <section class="input-section">
+                    <h2>📝 輸入來源</h2>
+                    
+                    <!-- URL 輸入 -->
+                    <div class="input-group">
+                        <label for="urlInput">🌐 線上影片網址：</label>
+                        <input type="url" id="urlInput" name="url" placeholder="請輸入 YouTube、Instagram、TikTok 等影片網址">
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- 檔案上傳 -->
+                    <div class="input-group">
+                        <label for="fileInput">📁 選擇本地檔案：</label>
+                        <input type="file" id="fileInput" name="file" accept=".mp4,.avi,.mkv,.mov,.wmv,.flv,.webm,.m4v,.3gp,.ogv,.mp3,.wav,.flac,.aac,.ogg,.m4a,.wma,.opus,.txt,.vtt,.srt">
+                        <button type="button" id="browseBtn">瀏覽檔案</button>
+                    </div>
+
+                    <!-- 拖拉上傳區域 -->
+                    <div class="drop-zone" id="dropZone">
+                        <div class="drop-content">
+                            <div class="drop-icon">📄</div>
+                            <p>將檔案拖拉到此處</p>
+                            <small>支援影片、音頻、逐字稿檔案</small>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 設定選項 -->
+                <section class="options-section">
+                    <h2>⚙️ 處理選項</h2>
+                    
+                    <div class="options-grid">
+                        <div class="option-group">
+                            <label for="modelSelect">🤖 Whisper 模型：</label>
+                            <select id="modelSelect" name="model">
+                                <option value="tiny">Tiny (最快，準確度較低)</option>
+                                <option value="base">Base (平衡)</option>
+                                <option value="small" selected>Small (推薦，預設)</option>
+                                <option value="medium">Medium (較慢，準確度高)</option>
+                                <option value="large">Large (最慢，準確度最高)</option>
+                            </select>
+                        </div>
+
+                        <div class="option-group">
+                            <div class="checkbox-group">
+                                <label>
+                                    <input type="checkbox" id="keepAudio" name="keep_audio">
+                                    💾 保留音頻檔案
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="noTranscribe" name="no_transcribe">
+                                    ⏭️ 僅下載，跳過轉錄
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="noSummary" name="no_summary">
+                                    🚫 跳過 AI 總結
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 提交按鈕 -->
+                <div class="submit-section">
+                    <button type="submit" id="submitBtn">
+                        <span class="btn-text">🚀 開始處理</span>
+                        <div class="btn-spinner" style="display: none;"></div>
+                    </button>
+                </div>
+            </form>
+
+            <!-- 處理狀態 -->
+            <section class="status-section" id="statusSection" style="display: none;">
+                <h2>📊 處理狀態</h2>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">準備中...</div>
+                </div>
+                <div class="log-container">
+                    <pre id="logOutput"></pre>
+                </div>
+            </section>
+
+            <!-- 結果預覽 -->
+            <section class="result-section" id="resultSection" style="display: none;">
+                <h2>📄 處理結果</h2>
+                <div class="result-header">
+                    <button type="button" id="copyBtn" class="copy-btn">
+                        📋 複製內容
+                    </button>
+                </div>
+                <div class="markdown-preview" id="markdownPreview"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>💡 支援格式：影片 (MP4, AVI, MKV...)、音頻 (MP3, WAV, FLAC...)、逐字稿 (TXT, VTT, SRT)</p>
+        </footer>
+    </div>
+
+    <script src="static/script.js"></script>
+</body>
+</html>
