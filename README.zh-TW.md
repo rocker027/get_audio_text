@@ -1,22 +1,22 @@
-# ⚠️ Important Disclaimer
+# ⚠️ 重要免責聲明
 
-**Before using this tool, please read and understand the following terms carefully.**
+**在使用本工具前，請務必仔細閱讀並理解以下條款。**
 
-This project (`get_audio_text`) is a technical tool designed for personal learning, research, and educational purposes. Its core function is to automate the processing of audio and video files, including downloading, transcription, and content analysis.
+本專案 (`get_audio_text`) 是一個為個人學習、研究和教育目的而設計的技術工具。其核心功能是自動化處理音訊和影片檔案，包括下載、轉錄和內容分析。
 
-1.  **Legality and Copyright**: This tool is not designed for copyright infringement. Users are solely responsible for all their actions. You should only use this tool for:
-    *   Content for which you own the full copyright (e.g., your own videos or recordings).
-    *   Content that is in the Public Domain.
-    *   Content for which you have obtained explicit permission from the copyright holder.
-    *   Content that falls under "Fair Use" or "Fair Dealing" as permitted by your local laws, for purposes such as personal backup, academic research, news reporting, or commentary.
+1.  **合法性與版權**：本工具的設計初衷並非用於侵犯版權。使用者應對其所有行為負全部法律責任。您只能將本工具用於：
+    *   您擁有完整版權的內容（例如，您自己創作的影片或錄音）。
+    *   已進入公共領域 (Public Domain) 的內容。
+    *   您已獲得版權持有人明確授權的內容。
+    *   在您所在地區法律允許的「合理使用 (Fair Use)」或「公平處理 (Fair Dealing)」範疇內，例如用於個人備份、學術研究、新聞報導或評論。
 
-2.  **Compliance with Platform Policies**: Downloading content from online platforms (such as YouTube, Instagram, TikTok, etc.) may violate their Terms of Service. You are responsible for reading and complying with the policies of any platform before downloading its content.
+2.  **遵守平台政策**：從網路平台（如 YouTube, Instagram, TikTok 等）下載內容可能違反其服務條款 (Terms of Service)。在從任何平台下載內容之前，您有責任閱讀並遵守該平台的相關政策。
 
-3.  **No Warranty**: This project is provided "as is", without any express or implied warranty. The developer does not guarantee the stability, reliability, or suitability of the tool for any specific purpose.
+3.  **無擔保**：本專案按「原樣」提供，不附帶任何明示或暗示的擔保。開發者不保證工具的穩定性、可靠性或適用於任何特定目的。
 
-4.  **Limitation of Liability**: The project developer is not liable for any direct or indirect damages (including, but not limited to, data loss, loss of business profits, or any legal disputes) arising from the use or inability to use this tool.
+4.  **責任限制**：對於因使用或無法使用本工具而導致的任何直接或間接損害（包括但不限於資料遺失、商業利潤損失或任何法律糾紛），專案開發者概不負責。
 
-**By continuing to use this tool, you agree to and accept all the terms above and commit to using this tool legally and in compliance with all regulations. If you do not agree with these terms, please stop using and delete all files related to this project immediately.**
+**繼續使用本工具，即表示您已同意並接受上述所有條款，並承諾將合法、合規地使用本工具。如果您不同意這些條款，請立即停止使用並刪除本專案的所有相關檔案。**
 
 ---
 
@@ -24,491 +24,491 @@ This project (`get_audio_text`) is a technical tool designed for personal learni
 
 ![CleanShot 2025-07-02 at 21 57 13@2x](https://github.com/user-attachments/assets/465b17ca-186a-41e2-b77c-a7f39309cd93)
 
-A powerful audio transcription tool with both a command-line and a web interface. It can download audio from platforms like YouTube and Instagram, automatically transcribe it into text, and provide AI-powered summaries.
+一個強大的音訊轉錄工具，提供命令列和 Web 介面兩種使用方式。它可以從 YouTube、Instagram 等平台下載音訊並自動轉錄成文字逐字稿，並具備 AI 總結功能。
 
-## ✨ Features
+## ✨ 功能特色
 
-### 🖥️ Web Interface
-- 🌐 **User-Friendly UI**: Intuitive drag-and-drop uploads and real-time status display.
-- 📊 **Live Progress Tracking**: Visualize the processing pipeline with detailed logs.
-- 📋 **Markdown Preview**: Beautifully formatted summaries with a one-click copy feature.
-- 📁 **Multiple Input Methods**: Supports URL input, file uploads, and drag-and-drop.
+### 🖥️ Web 介面
+- 🌐 **友善的使用者介面**：直觀的拖放上傳和即時狀態顯示。
+- 📊 **即時進度追蹤**：透過詳細日誌可視化處理流程。
+- 📋 **Markdown 預覽**：美觀的總結內容顯示和一鍵複製功能。
+- 📁 **多種輸入方式**：支援 URL 輸入、檔案上傳和拖放操作。
 
-### 🛠️ Command-Line Tool
-- 🚀 **All-in-One Automation**: From URL to transcript with a single command.
-- 🌐 **Multi-Platform Support**: YouTube, Instagram, TikTok, Facebook, and more.
-- 🎯 **Smart Filename Handling**: Automatically uses the original title for filenames, avoiding special character issues.
-- 🗂️ **Automatic Cleanup**: Deletes audio files after transcription to save space.
+### 🛠️ 命令列工具
+- 🚀 **一站式自動化**：從 URL 到逐字稿，一個指令搞定。
+- 🌐 **多平台支援**：YouTube、Instagram、TikTok、Facebook 等。
+- 🎯 **智能檔名處理**：自動使用原始標題作為檔名，避免特殊字元問題。
+- 🗂️ **自動清理**：轉錄完成後自動刪除音訊檔案，節省空間。
 
-### 🤖 AI-Enhanced Features
-- 📄 **Multiple Output Formats**: Supports TXT, SRT, and VTT formats.
-- 🧠 **AI Smart Summary**: Integrates with Gemini CLI to automatically generate content summaries.
-- 🎛️ **Flexible Options**: Choose to keep audio, skip transcription, customize the Whisper model, and more.
+### 🤖 AI 增強功能
+- 📄 **多種輸出格式**：支援 TXT、SRT 和 VTT 格式。
+- 🧠 **AI 智能總結**：整合 Gemini CLI，自動生成內容總結。
+- 🎛️ **靈活選項**：可選擇保留音訊、跳過轉錄、自訂 Whisper 模型等。
 
-## 🛠️ System Requirements
+## 🛠️ 系統需求
 
-### Required Tools
+### 必要工具
 
 ```bash
-# Install yt-dlp (video download tool)
+# 安裝 yt-dlp（影片下載工具）
 brew install yt-dlp
 
-# Install ffmpeg (audio conversion tool)
+# 安裝 ffmpeg（音訊轉換工具）
 brew install ffmpeg
 
-# Install Whisper (speech recognition tool)
+# 安裝 Whisper（語音識別工具）
 pip3 install openai-whisper
 ```
 
-### System Requirements
+### 系統要求
 
 - macOS / Linux
 - Python 3.9+
-- Internet Connection
+- 網路連線
 
-### Optional Tools
+### 可選工具
 
 ```bash
-# Install Gemini CLI (for AI summary feature)
-# Follow the installation guide from Google AI Studio
+# 安裝 Gemini CLI（用於 AI 總結功能）
+# 依照 Google AI Studio 文件安裝
 ```
 
-## 📦 Installation & Setup
+## 📦 安裝與設定
 
-### 1. Download the Project
+### 1. 下載專案
 
 ```bash
-# Clone the project
+# 複製專案
 git clone https://github.com/rocker027/get-audio-text.git
 cd get-audio-text
 
-# Or download the ZIP and extract it
+# 或下載 ZIP 檔並解壓縮
 ```
 
-### 2. Configure the Script
+### 2. 設定腳本
 
-The script will guide you through the setup on its first run:
+腳本首次執行時會引導您完成設定：
 
 ```bash
-# Grant execution permissions
+# 賦予執行權限
 chmod +x get_audio_text.sh
 
-# The first run will enter setup mode
+# 首次執行將進入設定模式
 ./get_audio_text.sh
 ```
 
-The script will ask you to set a directory for downloading audio files. The default path is recommended:
-- Default Path: `~/Downloads/AudioCapture`
-- Transcripts will be saved in: `~/Downloads/AudioCapture/Transcripts`
-- Whisper models will be cached in: `~/Downloads/AudioCapture/WhisperModel`
+腳本會要求您設定音訊檔案下載目錄。建議使用預設路徑：
+- 預設路徑：`~/Downloads/AudioCapture`
+- 逐字稿將儲存在：`~/Downloads/AudioCapture/Transcripts`
+- Whisper 模型將快取在：`~/Downloads/AudioCapture/WhisperModel`
 
-### 3. Launch the Web Interface (Optional)
+### 3. 啟動 Web 介面（可選）
 
 ```bash
-# Navigate to the web interface directory
+# 導航到 Web 介面目錄
 cd web_interface
 
-# Start the local web server
+# 啟動本地 Web 伺服器
 python3 -m http.server 8000 --cgi
 
-# Open http://localhost:8000 in your browser
+# 在瀏覽器中開啟 http://localhost:8000
 ```
 
-## 🚀 Usage
+## 🚀 使用方法
 
-### 🖥️ Using the Web Interface
+### 🖥️ 使用 Web 介面
 
-The web interface is recommended for a more intuitive experience:
+建議使用 Web 介面以獲得更直觀的體驗：
 
-1.  **Start the Web Server**
+1.  **啟動 Web 伺服器**
     ```bash
     cd web_interface
     python3 -m http.server 8000 --cgi
     ```
 
-2.  **Visit in Browser**: `http://localhost:8000`
+2.  **在瀏覽器中訪問**：`http://localhost:8000`
 
-3.  **How to Use**
-    - **URL Input**: Paste a URL from YouTube, Instagram, etc.
-    - **File Upload**: Click "Browse Files" or drag and drop a file.
-    - **Live Monitoring**: Watch the processing progress and detailed logs.
-    - **Result Preview**: View the summary in Markdown format and copy with one click.
+3.  **使用方式**
+    - **URL 輸入**：貼上 YouTube、Instagram 等網址。
+    - **檔案上傳**：點擊「瀏覽檔案」或拖放檔案。
+    - **即時監控**：查看處理進度和詳細日誌。
+    - **結果預覽**：以 Markdown 格式查看總結並一鍵複製。
 
-### 🛠️ Using the Command-Line
+### 🛠️ 使用命令列
 
-#### Basic Usage
+#### 基本使用
 
 ```bash
-# Download audio + auto transcribe (default behavior)
+# 下載音訊 + 自動轉錄（預設行為）
 ./get_audio_text.sh "https://www.youtube.com/watch?v=VIDEO_ID"
 
 # Instagram Reels
 ./get_audio_text.sh "https://www.instagram.com/reel/POST_ID/"
 ```
 
-#### Using Local Files
+#### 使用本地檔案
 
 ```bash
-# Transcribe a local video file
+# 轉錄本地影片檔案
 ./get_audio_text.sh "/path/to/local_video.mp4"
 
-# Transcribe an audio file
+# 轉錄音訊檔案
 ./get_audio_text.sh "/path/to/audio.mp3"
 
-# Analyze a transcript file (directly generates AI summary)
+# 分析逐字稿檔案（直接生成 AI 總結）
 ./get_audio_text.sh "/path/to/transcript.txt"
 ```
 
-#### Advanced Options
+#### 進階選項
 
 ```bash
-# Only download audio, no transcription
+# 僅下載音訊，不轉錄
 ./get_audio_text.sh "URL" --no-transcribe
 
-# Keep the audio file after transcription
+# 轉錄完成後保留音訊檔案
 ./get_audio_text.sh "URL" --keep-audio
 
-# Skip AI summary
+# 跳過 AI 總結
 ./get_audio_text.sh "URL" --no-summary
 
-# Specify Whisper model (default is small)
+# 指定 Whisper 模型（預設為 small）
 ./get_audio_text.sh "URL" --model base
 ./get_audio_text.sh "URL" --model medium
 
-# Combine options
+# 組合選項
 ./get_audio_text.sh "URL" --model small --keep-audio --no-summary
 ```
 
-## 📁 Project Structure
+## 📁 專案結構
 
 ```
 get-audio-text/
-├── 📄 get_audio_text.sh          # Main transcription script
-├── 📄 README.md                 # Project documentation (English)
-├── 📄 README.zh-TW.md           # Project documentation (Traditional Chinese)
-├── 📄 .gitignore                 # Git ignore settings
-└── 📂 web_interface/             # Web Interface
-    ├── 📄 index.html             # Main page
-    ├── 📄 test.html              # CGI test page
-    ├── 📄 README.md              # Web interface documentation
-    ├── 📂 static/                # Static assets
-    │   ├── 📄 style.css          # Stylesheet
-    │   └── 📄 script.js          # Frontend logic
-    ├── 📂 cgi-bin/               # CGI scripts
-    │   ├── 📄 process.py         # Main processing script
-    │   ├── 📄 test.py            # Test script
-    │   └── 📄 ...                # Other test utilities
-    └── 📂 uploads/               # Temporary file uploads
+├── 📄 get_audio_text.sh          # 主要轉錄腳本
+├── 📄 README.md                 # 專案說明文件（英文）
+├── 📄 README.zh-TW.md           # 專案說明文件（繁體中文）
+├── 📄 .gitignore                 # Git 忽略設定
+└── 📂 web_interface/             # Web 介面
+    ├── 📄 index.html             # 主頁面
+    ├── 📄 test.html              # CGI 測試頁面
+    ├── 📄 README.md              # Web 介面說明文件
+    ├── 📂 static/                # 靜態資源
+    │   ├── 📄 style.css          # 樣式表
+    │   └── 📄 script.js          # 前端邏輯
+    ├── 📂 cgi-bin/               # CGI 腳本
+    │   ├── 📄 process.py         # 主要處理腳本
+    │   ├── 📄 test.py            # 測試腳本
+    │   └── 📄 ...                # 其他測試工具
+    └── 📂 uploads/               # 暫存檔案上傳
 ```
 
-### Output File Structure
+### 輸出檔案結構
 
 ```
-~/Downloads/AudioCapture/         # Default output directory
-├── 📂 Transcripts/               # Transcripts and summaries
-│   ├── Video Title.txt          # Plain text transcript
-│   ├── Video Title.srt          # Subtitle format (with timestamps)
-│   ├── Video Title.vtt          # WebVTT format
-│   └── Video Title_summary.txt  # AI-generated summary
-├── 📂 WhisperModel/             # Whisper model cache
-│   └── [model_name].pt          # Downloaded model file
-└── Video Title.mp3              # Audio file (optional, can be kept)
+~/Downloads/AudioCapture/         # 預設輸出目錄
+├── 📂 Transcripts/               # 逐字稿和總結
+│   ├── 影片標題.txt             # 純文字逐字稿
+│   ├── 影片標題.srt             # 字幕格式（帶時間戳）
+│   ├── 影片標題.vtt             # WebVTT 格式
+│   └── 影片標題_summary.txt      # AI 生成的總結
+├── 📂 WhisperModel/             # Whisper 模型快取
+│   └── [model_name].pt          # 下載的模型檔案
+└── 影片標題.mp3                 # 音訊檔案（可選保留）
 ```
 
-## 💡 Usage Examples
+## 💡 使用範例
 
-### 🖥️ Web Interface Examples
+### 🖥️ Web 介面範例
 
-1.  **Process a YouTube Video**
-    - Paste into the URL input: `https://www.youtube.com/watch?v=dQw4w9WgXcQ`
-    - Select Whisper model: `small`
-    - Click "🚀 Start Processing"
-    - Watch the live progress: Downloading → Transcribing → AI Summary
-    - View and copy the summary in Markdown format.
+1.  **處理 YouTube 影片**
+    - 在 URL 輸入框中貼上：`https://www.youtube.com/watch?v=dQw4w9WgXcQ`
+    - 選擇 Whisper 模型：`small`
+    - 點擊「🚀 開始處理」
+    - 查看即時進度：下載 → 轉錄 → AI 總結
+    - 查看並複製 Markdown 格式的總結。
 
-2.  **Process a Local File**
-    - Drag and drop an MP4 file into the upload area.
-    - The system automatically detects the file type and processes it accordingly.
-    - View the real-time status and final result.
+2.  **處理本地檔案**
+    - 將 MP4 檔案拖放到上傳區域。
+    - 系統自動偵測檔案類型並進行相應處理。
+    - 查看即時狀態和最終結果。
 
-### 🛠️ Command-Line Examples
+### 🛠️ 命令列範例
 
-#### Transcribe a YouTube Video
+#### 轉錄 YouTube 影片
 
 ```bash
 ./get_audio_text.sh "https://www.youtube.com/watch?v=dQw4w9WgXcQ" --model small
 ```
 
-**Output Files:**
-- `Rick Astley - Never Gonna Give You Up.txt` (Plain text transcript)
-- `Rick Astley - Never Gonna Give You Up.srt` (Subtitle file)
-- `Rick Astley - Never Gonna Give You Up.vtt` (WebVTT file)
-- `Rick Astley - Never Gonna Give You Up_summary.txt` (AI summary)
+**輸出檔案：**
+- `Rick Astley - Never Gonna Give You Up.txt`（純文字逐字稿）
+- `Rick Astley - Never Gonna Give You Up.srt`（字幕檔）
+- `Rick Astley - Never Gonna Give You Up.vtt`（WebVTT 檔）
+- `Rick Astley - Never Gonna Give You Up_summary.txt`（AI 總結）
 
-#### Transcribe an Instagram Reel
+#### 轉錄 Instagram Reel
 
 ```bash
 ./get_audio_text.sh "https://www.instagram.com/reel/ABC123/" --keep-audio
 ```
 
-**Output:**
-- Full transcript files (3 formats)
-- AI smart summary
-- The original audio file (because of --keep-audio)
+**輸出：**
+- 完整的逐字稿檔案（3 種格式）
+- AI 智能總結
+- 原始音訊檔案（因使用 --keep-audio）
 
-#### Process Local Files
+#### 處理本地檔案
 
 ```bash
-# Process a local video
+# 處理本地影片
 ./get_audio_text.sh "/path/to/video.mp4"
 
-# Process an audio file
+# 處理音訊檔案
 ./get_audio_text.sh "/path/to/audio.mp3"
 
-# Analyze an existing transcript
+# 分析現有逐字稿
 ./get_audio_text.sh "/path/to/transcript.vtt"
 ```
 
-## ⚙️ Parameter Reference
+## ⚙️ 參數參考
 
-### Command-Line Arguments
+### 命令列參數
 
-| Argument | Description | Example |
+| 參數 | 說明 | 範例 |
 |---|---|---|
-| `--model [model_name]` | Specify Whisper model (tiny, base, small, medium, large). Default: `small` | `./get_audio_text.sh "URL" --model base` |
-| `--no-transcribe` | Only download audio, skip transcription | `./get_audio_text.sh "URL" --no-transcribe` |
-| `--keep-audio` | Keep the audio file after transcription | `./get_audio_text.sh "URL" --keep-audio` |
-| `--no-summary` | Skip generating AI summary | `./get_audio_text.sh "URL" --no-summary` |
+| `--model [model_name]` | 指定 Whisper 模型 (tiny, base, small, medium, large)。預設：`small` | `./get_audio_text.sh "URL" --model base` |
+| `--no-transcribe` | 僅下載音訊，跳過轉錄 | `./get_audio_text.sh "URL" --no-transcribe` |
+| `--keep-audio` | 轉錄後保留音訊檔案 | `./get_audio_text.sh "URL" --keep-audio` |
+| `--no-summary` | 跳過生成 AI 總結 | `./get_audio_text.sh "URL" --no-summary` |
 
-### Whisper Model Comparison
+### Whisper 模型比較
 
-| Model | Size | Speed | Accuracy | Recommended Use |
+| 模型 | 大小 | 速度 | 準確度 | 建議用途 |
 |---|---|---|---|---|
-| `tiny` | ~39 MB | Fastest | Low | Quick tests |
-| `base` | ~74 MB | Fast | Fair | Everyday use |
-| `small` | ~244 MB | Medium | Good | **Recommended Default** |
-| `medium` | ~769 MB | Slow | Very Good | High-quality needs |
-| `large` | ~1550 MB | Slowest | Best | Professional use |
+| `tiny` | ~39 MB | 最快 | 較低 | 快速測試 |
+| `base` | ~74 MB | 快 | 一般 | 日常使用 |
+| `small` | ~244 MB | 中等 | 良好 | **推薦預設** |
+| `medium` | ~769 MB | 慢 | 很好 | 高品質需求 |
+| `large` | ~1550 MB | 最慢 | 最佳 | 專業用途 |
 
-### Web Interface Options
+### Web 介面選項
 
-- **Whisper Model**: Select from a dropdown menu.
-- **Keep audio file**: Whether to keep the audio after transcription.
-- **Download only, skip transcription**: Only downloads, does not transcribe.
-- **Skip AI summary**: Does not generate a Gemini summary.
+- **Whisper 模型**：從下拉選單中選擇。
+- **保留音訊檔案**：轉錄後是否保留音訊。
+- **僅下載，跳過轉錄**：只下載，不轉錄。
+- **跳過 AI 總結**：不生成 Gemini 總結。
 
-## 🌍 Supported Formats & Platforms
+## 🌍 支援格式與平台
 
-### 📱 Supported Platforms
+### 📱 支援平台
 
-| Platform | Support | Notes |
+| 平台 | 支援狀況 | 備註 |
 |---|---|---|
-| ✅ YouTube | Fully Supported | Public videos, Shorts |
-| ✅ Instagram | Public Content | Public posts, Reels, Stories |
-| ✅ TikTok | Fully Supported | Public videos |
-| ✅ Facebook | Partially Supported | Public videos |
-| ✅ Twitter/X | Partially Supported | Public videos |
-| ✅ Others | Limited Support | Depends on yt-dlp support |
+| ✅ YouTube | 完全支援 | 公開影片、Shorts |
+| ✅ Instagram | 公開內容 | 公開貼文、Reels、Stories |
+| ✅ TikTok | 完全支援 | 公開影片 |
+| ✅ Facebook | 部分支援 | 公開影片 |
+| ✅ Twitter/X | 部分支援 | 公開影片 |
+| ✅ 其他 | 有限支援 | 依 yt-dlp 支援度 |
 
-### 📁 Supported File Formats
+### 📁 支援檔案格式
 
-#### Video Formats
-- **Fully Supported**: MP4, AVI, MKV, MOV, WMV, FLV, WEBM, M4V, 3GP, OGV
+#### 影片格式
+- **完全支援**：MP4, AVI, MKV, MOV, WMV, FLV, WEBM, M4V, 3GP, OGV
 
-#### Audio Formats
-- **Fully Supported**: MP3, WAV, FLAC, AAC, OGG, M4A, WMA, OPUS
+#### 音訊格式
+- **完全支援**：MP3, WAV, FLAC, AAC, OGG, M4A, WMA, OPUS
 
-#### Transcript Formats
-- **Direct Analysis**: TXT, VTT, SRT (Supports direct AI summary without transcription)
+#### 逐字稿格式
+- **直接分析**：TXT, VTT, SRT（支援直接 AI 總結，無需轉錄）
 
-### 🔄 Processing Workflow
+### 🔄 處理流程
 
-1.  **Online Video** → Download Audio → Whisper Transcription → AI Summary
-2.  **Local Video** → Extract Audio → Whisper Transcription → AI Summary
-3.  **Local Audio** → Whisper Transcription → AI Summary
-4.  **Transcript File** → Direct AI Summary
+1.  **線上影片** → 下載音訊 → Whisper 轉錄 → AI 總結
+2.  **本地影片** → 提取音訊 → Whisper 轉錄 → AI 總結
+3.  **本地音訊** → Whisper 轉錄 → AI 總結
+4.  **逐字稿檔案** → 直接 AI 總結
 
-## 🔧 Advanced Configuration
+## 🔧 進階設定
 
-### Changing Output Paths
+### 修改輸出路徑
 
-The script guides you through setup on the first run, but you can also manually edit the config file:
+腳本首次執行時會引導您設定，但您也可以手動編輯設定檔：
 
 ```bash
-# Config file location
+# 設定檔位置
 ~/.get_audio_text_config
 
-# Content format
+# 內容格式
 AUDIO_DIR="/your/custom/path/AudioCapture"
 TRANSCRIPT_DIR="/your/custom/path/AudioCapture/Transcripts"
 WHISPER_MODEL_DIR="/your/custom/path/AudioCapture/WhisperModel"
 ```
 
-### Web Interface Configuration
+### Web 介面設定
 
-The web interface automatically uses the settings from the command-line script. No extra configuration is needed.
+Web 介面會自動使用命令列腳本的設定。無需額外配置。
 
-### Gemini AI Configuration
+### Gemini AI 設定
 
-To use the AI summary feature, you need to set up the Gemini CLI first:
+若要使用 AI 總結功能，您需要先設定 Gemini CLI：
 
 ```bash
-# Install Gemini CLI (refer to Google AI Studio documentation)
-# Set your API key
+# 安裝 Gemini CLI（請參考 Google AI Studio 文件）
+# 設定您的 API 金鑰
 export GOOGLE_API_KEY="your-api-key"
 ```
 
-## 🐛 FAQ & Troubleshooting
+## 🐛 常見問題與疑難排解
 
-### Installation Issues
+### 安裝問題
 
-**Q: Missing tool errors?**
+**Q: 提示缺少工具？**
 ```bash
-# Check tool installations
+# 檢查工具安裝狀況
 yt-dlp --version
 ffmpeg -version
 whisper --help
 
-# Reinstall
+# 重新安裝
 brew install yt-dlp ffmpeg
 pip3 install openai-whisper
 ```
 
-**Q: Web interface won't start?**
+**Q: Web 介面無法啟動？**
 ```bash
-# Ensure you are in the correct directory
+# 確保您在正確的目錄中
 cd web_interface
 
-# Make sure to use the --cgi parameter
+# 確保使用 --cgi 參數
 python3 -m http.server 8000 --cgi
 
-# Check http://localhost:8000 in your browser
+# 檢查瀏覽器訪問 http://localhost:8000
 ```
 
-### Usage Issues
+### 使用問題
 
-**Q: Can't find the downloaded files?**
-- Check the config file: `~/.get_audio_text_config`
-- Ensure the directory exists and has write permissions.
-- Default location: `~/Downloads/AudioCapture/Transcripts/`
+**Q: 找不到下載的檔案？**
+- 檢查設定檔：`~/.get_audio_text_config`
+- 確保目錄存在且有寫入權限。
+- 預設位置：`~/Downloads/AudioCapture/Transcripts/`
 
-**Q: Instagram/TikTok download fails?**
-- Make sure the content is public.
-- Check if the URL format is correct.
-- Ensure your internet connection is working.
-- Try updating yt-dlp: `brew upgrade yt-dlp`
+**Q: Instagram/TikTok 下載失敗？**
+- 確保內容是公開的。
+- 檢查 URL 格式是否正確。
+- 確保您的網路連線正常。
+- 嘗試更新 yt-dlp：`brew upgrade yt-dlp`
 
-**Q: Web interface stuck at "Preparing"?**
-- Use `http://localhost:8000/test.html` to diagnose the CGI environment.
-- Check Python path and permissions.
-- Ensure `get_audio_text.sh` has execute permissions.
+**Q: Web 介面卡在「準備中」？**
+- 使用 `http://localhost:8000/test.html` 診斷 CGI 環境。
+- 檢查 Python 路徑和權限。
+- 確保 `get_audio_text.sh` 具有執行權限。
 
-### Performance Issues
+### 效能問題
 
-**Q: Whisper transcription is slow?**
-- Use a smaller model (`tiny` or `base`).
-- The first use of a model requires downloading it, which takes time.
-- Ensure you have enough memory and CPU resources.
+**Q: Whisper 轉錄速度很慢？**
+- 使用較小的模型（`tiny` 或 `base`）。
+- 首次使用模型需要下載，這需要時間。
+- 確保您有足夠的記憶體和 CPU 資源。
 
-**Q: AI summary is not generated?**
-- Check if Gemini CLI is installed.
-- Verify that the API key is set correctly.
-- You can skip the summary with `--no-summary`.
+**Q: AI 總結未生成？**
+- 檢查是否已安裝 Gemini CLI。
+- 確認 API 金鑰設定正確。
+- 您可以使用 `--no-summary` 跳過總結功能。
 
-## 🔧 Development & Contribution
+## 🔧 開發與貢獻
 
-### Project Tech Stack
+### 專案技術棧
 
-- **Command-Line Script**: Bash Shell Script
-- **Web Frontend**: HTML5, CSS3, JavaScript (vanilla)
-- **Web Backend**: Python CGI
-- **Audio Processing**: yt-dlp, ffmpeg, OpenAI Whisper
-- **AI Integration**: Gemini CLI
+- **命令列腳本**：Bash Shell Script
+- **Web 前端**：HTML5, CSS3, JavaScript (原生)
+- **Web 後端**：Python CGI
+- **音訊處理**：yt-dlp, ffmpeg, OpenAI Whisper
+- **AI 整合**：Gemini CLI
 
-### Development Environment Setup
+### 開發環境設定
 
 ```bash
-# Clone the project
+# 複製專案
 git clone https://github.com/rocker027/get-audio-text.git
 cd get-audio-text
 
-# Set script permissions
+# 設定腳本權限
 chmod +x get_audio_text.sh
 
-# Test command-line functionality
+# 測試命令列功能
 ./get_audio_text.sh
 
-# Test web interface
+# 測試 Web 介面
 cd web_interface
 python3 -m http.server 8000 --cgi
 ```
 
-### Contribution Guidelines
+### 貢獻指南
 
-Issues and Pull Requests are welcome!
+歡迎提交 Issue 和 Pull Request！
 
-1.  **Report Issues**: Use GitHub Issues.
-2.  **Suggest Features**: Describe your needs and use case in detail.
-3.  **Code Contributions**: Please follow the existing code style.
+1.  **回報問題**：使用 GitHub Issues。
+2.  **功能建議**：詳細描述需求和使用情境。
+3.  **程式碼貢獻**：請遵循現有的程式碼風格。
 
-## 🙏 Acknowledgements & Third-Party Licenses
+## 🙏 致謝與第三方授權
 
-This project relies on several excellent open-source tools. We extend our heartfelt thanks to their developers. Users of this tool should also comply with the license terms of these third-party tools.
+本專案的實現依賴於以下幾個優秀的開源工具。我們對這些專案的開發者表示衷心的感謝。使用者在使用本工具時，也應遵守這些第三方工具的授權條款。
 
 -   **yt-dlp**
-    -   **Purpose**: Downloading videos and audio from online platforms.
-    -   **License**: The Unlicense (Public Domain)
-    -   **Project Link**: [https://github.com/yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp)
+    -   **用途**：從網路平台下載影片和音訊。
+    -   **授權**：The Unlicense (Public Domain)
+    -   **專案連結**：[https://github.com/yt-dlp/yt-dlp](https://github.com/yt-dlp/yt-dlp)
 
 -   **FFmpeg**
-    -   **Purpose**: Audio extraction and format conversion.
-    -   **License**: GNU Lesser General Public License (LGPL) version 2.1 or later / GNU General Public License (GPL) version 2 or later.
-    -   **Project Link**: [https://ffmpeg.org/](https://ffmpeg.org/)
+    -   **用途**：音訊提取與格式轉換。
+    -   **授權**：GNU Lesser General Public License (LGPL) version 2.1 or later / GNU General Public License (GPL) version 2 or later。
+    -   **專案連結**：[https://ffmpeg.org/](https://ffmpeg.org/)
 
 -   **OpenAI Whisper**
-    -   **Purpose**: Speech-to-text transcription.
-    -   **License**: MIT License
-    -   **Project Link**: [https://github.com/openai/whisper](https://github.com/openai/whisper)
+    -   **用途**：語音轉文字辨識。
+    -   **授權**：MIT License
+    -   **專案連結**：[https://github.com/openai/whisper](https://github.com/openai/whisper)
 
 -   **Google Gemini**
-    -   **Purpose**: AI content summarization.
-    -   **License**: Apache License 2.0
-    -   **Project Link**: [https://ai.google.dev/](https://ai.google.dev/)
+    -   **用途**：AI 內容總結。
+    -   **授權**：Apache License 2.0
+    -   **專案連結**：[https://ai.google.dev/](https://ai.google.dev/)
 
 ---
 
-## 📄 License & Terms of Use
+## 📄 授權與使用條款
 
-### License
+### 授權條款
 
-This project is licensed under the **MIT License**. You are free to use, modify, and distribute it.
+本專案採用 **MIT 授權條款**。您可以自由使用、修改和分發。
 
-### Important Notice
+### 重要聲明
 
-- ⚖️ **Legal Compliance**: Please adhere to the terms of use of all platforms.
-- 🎓 **Usage Limitation**: For personal study, research, and legitimate purposes only.
-- 📄 **Respect Copyright**: Please respect copyright and do not download unauthorized content.
-- 🚫 **Disclaimer of Liability**: Users assume all risks associated with the use of this tool.
+- ⚖️ **法律合規**：請遵守各平台的使用條款。
+- 🎓 **用途限制**：僅用於個人學習、研究和合法用途。
+- 📄 **版權尊重**：請尊重版權，不要下載未經授權的內容。
+- 🚫 **責任聲明**：使用者須自行承擔使用本工具的風險。
 
-## 📞 Support & Feedback
+## 📞 支援與回饋
 
-### Getting Help
+### 取得協助
 
-1.  📖 Check the [FAQ](#-faq--troubleshooting) section.
-2.  🐛 Submit a [GitHub Issue](https://github.com/rocker027/get-audio-text/issues).
-3.  📚 Refer to the [yt-dlp documentation](https://github.com/yt-dlp/yt-dlp) for platform support.
-4.  🧪 Use `http://localhost:8000/test.html` to diagnose issues.
+1.  📖 查看 [常見問題](#-常見問題與疑難排解) 章節。
+2.  🐛 提交 [GitHub Issue](https://github.com/rocker027/get-audio-text/issues)。
+3.  📚 參考 [yt-dlp 文件](https://github.com/yt-dlp/yt-dlp) 了解平台支援。
+4.  🧪 使用 `http://localhost:8000/test.html` 診斷問題。
 
-### Feature Highlights
+### 功能亮點
 
-- 🖥️ **Dual Mode**: Command-Line + Web Interface
-- 🎯 **Intelligent**: Automatic file type detection
-- 🤖 **AI-Enhanced**: Gemini smart summaries
-- 📊 **Visualized**: Real-time progress and status display
-- 🔧 **User-Friendly**: One-click installation and automatic setup
+- 🖥️ **雙模式**：命令列 + Web 介面
+- 🎯 **智能化**：自動檔案類型偵測
+- 🤖 **AI 增強**：Gemini 智能總結
+- 📊 **可視化**：即時進度和狀態顯示
+- 🔧 **使用者友善**：一鍵安裝和自動設定
 
 ---
 
-**⭐ If this tool is helpful to you, please give it a Star to show your support!**
+**⭐ 如果這個工具對您有幫助，請給個 Star 支持我們！**
 
-**🚀 Making audio transcription simpler and smarter!**
+**🚀 讓音訊轉錄變得更簡單、更智能！**
