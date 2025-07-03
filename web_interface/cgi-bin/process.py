@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import cgi
-import cgitb
 import os
 import sys
 import subprocess
@@ -11,9 +9,149 @@ import tempfile
 import shutil
 import time
 from pathlib import Path
+from urllib.parse import parse_qs
+from http.cookies import SimpleCookie
+import traceback
 
-# 啟用 CGI 錯誤追蹤
-cgitb.enable()
+# 自定義 CGI 錯誤追蹤
+def enable_debug():
+    def debug_handler(exc_type, exc_value, exc_traceback):
+        print("Content-Type: text/html; charset=utf-8\r\n\r\n")
+        print("<h1>CGI Script Error</h1>")
+        print("<pre>")
+        traceback.print_exception(exc_type, exc_value, exc_traceback)
+        print("</pre>")
+    sys.excepthook = debug_handler
+
+enable_debug()
+
+# 全局翻譯變量
+current_translations = {}
+
+def load_translations(lang='en'):
+    """載入翻譯檔案"""
+    global current_translations
+    try:
+        script_dir = Path(__file__).parent.parent
+        translation_file = script_dir / 'static' / 'translations' / f'{lang}.json'
+        
+        if translation_file.exists():
+            with open(translation_file, 'r', encoding='utf-8') as f:
+                current_translations = json.load(f)
+        else:
+            # 如果翻譯檔案不存在，回退到英文
+            if lang != 'en':
+                load_translations('en')
+    except Exception as e:
+        # 如果載入失敗，使用空字典
+        current_translations = {}
+
+def t(key, fallback=''):
+    """翻譯函數"""
+    return current_translations.get(key, fallback)
+
+# 簡單的表單解析類來替代 cgi.FieldStorage
+class SimpleFieldStorage:
+    def __init__(self):
+        self.fields = {}
+        self.files = {}
+        
+        # 獲取請求方法
+        method = os.environ.get('REQUEST_METHOD', 'GET')
+        
+        if method == 'POST':
+            # 獲取 Content-Type
+            content_type = os.environ.get('CONTENT_TYPE', '')
+            content_length = int(os.environ.get('CONTENT_LENGTH', 0))
+            
+            if content_length > 0:
+                if 'multipart/form-data' in content_type:
+                    self._parse_multipart(content_type, content_length)
+                elif 'application/x-www-form-urlencoded' in content_type:
+                    self._parse_urlencoded(content_length)
+        elif method == 'GET':
+            query_string = os.environ.get('QUERY_STRING', '')
+            if query_string:
+                self._parse_query_string(query_string)
+    
+    def _parse_query_string(self, query_string):
+        parsed = parse_qs(query_string)
+        for key, values in parsed.items():
+            self.fields[key] = values[0] if values else ''
+    
+    def _parse_urlencoded(self, content_length):
+        data = sys.stdin.read(content_length)
+        self._parse_query_string(data)
+    
+    def _parse_multipart(self, content_type, content_length):
+        # 簡化的 multipart 解析
+        import re
+        
+        # 提取 boundary
+        boundary_match = re.search(r'boundary=([^;]+)', content_type)
+        if not boundary_match:
+            return
+        
+        boundary = boundary_match.group(1).strip('"')
+        data = sys.stdin.buffer.read(content_length)
+        
+        # 分割各個部分
+        parts = data.split(f'--{boundary}'.encode())
+        
+        for part in parts[1:-1]:  # 跳過第一個和最後一個空部分
+            if not part.strip():
+                continue
+                
+            # 分離 headers 和 content
+            try:
+                header_end = part.find(b'\r\n\r\n')
+                if header_end == -1:
+                    continue
+                    
+                headers = part[:header_end].decode('utf-8')
+                content = part[header_end + 4:]
+                
+                # 解析 Content-Disposition
+                name_match = re.search(r'name="([^"]+)"', headers)
+                if not name_match:
+                    continue
+                    
+                field_name = name_match.group(1)
+                
+                # 檢查是否為檔案
+                filename_match = re.search(r'filename="([^"]*)"', headers)
+                if filename_match:
+                    filename = filename_match.group(1)
+                    if filename:  # 只有當檔名不為空時才算作檔案
+                        self.files[field_name] = {
+                            'filename': filename,
+                            'content': content.rstrip(b'\r\n')
+                        }
+                    continue
+                
+                # 一般欄位
+                self.fields[field_name] = content.decode('utf-8').rstrip('\r\n')
+            except Exception as e:
+                continue
+    
+    def getvalue(self, key, default=None):
+        return self.fields.get(key, default)
+    
+    def __contains__(self, key):
+        return key in self.fields or key in self.files
+    
+    def __getitem__(self, key):
+        if key in self.fields:
+            return type('Field', (), {'value': self.fields[key]})()
+        elif key in self.files:
+            file_data = self.files[key]
+            field = type('FileField', (), {
+                'filename': file_data['filename'],
+                'file': type('File', (), {'read': lambda: file_data['content']})()
+            })()
+            return field
+        else:
+            raise KeyError(key)
 
 # 設定路徑 - 改善路徑檢測邏輯
 def get_script_paths():
@@ -135,7 +273,7 @@ def execute_script(input_source, options, original_name=""):
         if options.get('no_summary'):
             cmd.append('--no-summary')
         
-        send_status(f"執行命令: {' '.join(cmd)}", 10)
+        send_status(t('statusExecutingCommand', '執行命令: ') + ' '.join(cmd), 10)
         
         # 執行腳本
         process = subprocess.Popen(
@@ -166,21 +304,21 @@ def execute_script(input_source, options, original_name=""):
         return_code = process.wait()
         
         if return_code == 0:
-            send_status("腳本執行完成，正在讀取結果...", 95)
+            send_status(t('statusScriptComplete', '腳本執行完成，正在讀取結果...'), 95)
             
             # 嘗試讀取總結檔案
             script_root_dir = GET_AUDIO_TEXT_SCRIPT.parent
             summary_content = get_transcript_summary(original_name or input_source, script_root_dir)
             
             if summary_content:
-                send_success("處理完成！", summary_content)
+                send_success(t('statusProcessingComplete', '處理完成！'), summary_content)
             else:
-                send_success("處理完成！但未找到總結檔案。", "")
+                send_success(t('statusProcessingCompleteNoSummary', '處理完成！但未找到總結檔案。'), "")
         else:
-            send_error(f"腳本執行失敗，返回碼: {return_code}")
+            send_error(t('errorScriptExecutionFailed', '腳本執行失敗，返回碼: ') + str(return_code))
             
     except Exception as e:
-        send_error(f"執行錯誤: {str(e)}")
+        send_error(t('errorExecutionError', '執行錯誤: ') + str(e))
 
 def main():
     # 設定 HTTP 標頭 - 使用 application/json 而不是 text/plain
@@ -192,26 +330,30 @@ def main():
     print()
     
     try:
-        # 立即發送初始狀態
-        send_status("開始處理請求...", 0)
-        
         # 解析表單數據
-        form = cgi.FieldStorage()
-        send_status("解析表單數據...", 5)
+        form = SimpleFieldStorage()
+        
+        # 載入翻譯
+        language = form.getvalue('language', 'en')
+        load_translations(language)
+        
+        # 立即發送初始狀態
+        send_status(t('statusStartProcessing', '開始處理請求...'), 0)
+        send_status(t('statusParsingForm', '解析表單數據...'), 5)
         
         # 檢查腳本是否存在
         if not GET_AUDIO_TEXT_SCRIPT.exists():
-            send_error(f"找不到轉錄腳本: {GET_AUDIO_TEXT_SCRIPT}")
+            send_error(t('errorScriptNotFound', '找不到轉錄腳本: ') + str(GET_AUDIO_TEXT_SCRIPT))
             return
         
         # 確保腳本有執行權限
         os.chmod(GET_AUDIO_TEXT_SCRIPT, 0o755)
-        send_status("腳本權限檢查完成", 8)
+        send_status(t('statusScriptPermissionCheck', '腳本權限檢查完成'), 8)
         
         # 處理 URL 輸入
         if 'url' in form and form['url'].value.strip():
             url = form['url'].value.strip()
-            send_status(f"處理 URL: {url}", 5)
+            send_status(t('statusProcessingURL', '處理 URL: ') + url, 5)
             
             options = {
                 'model': form.getvalue('model', 'small'),
@@ -223,19 +365,19 @@ def main():
             execute_script(url, options, url)
             
         # 處理檔案上傳
-        elif 'file' in form and form['file'].filename:
-            file_item = form['file']
-            original_filename = file_item.filename
+        elif 'file' in form and form.files.get('file', {}).get('filename'):
+            file_data = form.files['file']
+            original_filename = file_data['filename']
             
-            send_status(f"上傳檔案: {original_filename}", 5)
+            send_status(t('statusUploadingFile', '上傳檔案: ') + original_filename, 5)
             
             # 儲存上傳的檔案
             upload_path = UPLOAD_DIR / original_filename
             try:
                 with open(upload_path, 'wb') as f:
-                    f.write(file_item.file.read())
+                    f.write(file_data['content'])
                 
-                send_status("檔案上傳完成", 10)
+                send_status(t('statusFileUploadComplete', '檔案上傳完成'), 10)
                 
                 options = {
                     'model': form.getvalue('model', 'small'),
@@ -247,7 +389,7 @@ def main():
                 execute_script(str(upload_path), options, original_filename)
                 
             except Exception as e:
-                send_error(f"檔案上傳失敗: {str(e)}")
+                send_error(t('errorFileUploadFailed', '檔案上傳失敗: ') + str(e))
             finally:
                 # 清理上傳的檔案
                 if upload_path.exists():
@@ -256,10 +398,10 @@ def main():
                     except:
                         pass
         else:
-            send_error("請提供 URL 或上傳檔案")
+            send_error(t('errorNoInputProvided', '請提供 URL 或上傳檔案'))
             
     except Exception as e:
-        send_error(f"系統錯誤: {str(e)}")
+        send_error(t('errorSystemError', '系統錯誤: ') + str(e))
 
 if __name__ == "__main__":
     main()
