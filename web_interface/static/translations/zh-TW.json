@@ -24,5 +24,6 @@
   "statusPreparing": "準備中...",
   "copyContentButton": "📋 複製內容",
   "resultTitle": "📄 處理結果",
-  "footerHint": "💡 支援的格式: 視訊 (MP4, AVI, MKV...), 音訊 (MP3, WAV, FLAC...), 文字稿 (TXT, VTT, SRT)"
+  "footerHint": "💡 支援的格式: 視訊 (MP4, AVI, MKV...), 音訊 (MP3, WAV, FLAC...), 文字稿 (TXT, VTT, SRT)",
+  "dividerOr": "或"
 }

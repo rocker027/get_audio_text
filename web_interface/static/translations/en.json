@@ -24,5 +24,6 @@
   "statusPreparing": "Preparing...",
   "copyContentButton": "📋 Copy Content",
   "resultTitle": "📄 Processing Result",
-  "footerHint": "💡 Supported formats: Video (MP4, AVI, MKV...), Audio (MP3, WAV, FLAC...), Transcript (TXT, VTT, SRT)"
+  "footerHint": "💡 Supported formats: Video (MP4, AVI, MKV...), Audio (MP3, WAV, FLAC...), Transcript (TXT, VTT, SRT)",
+  "dividerOr": "OR"
 }

@@ -184,8 +184,7 @@ section h2 {
     z-index: 1;
 }
 
-.divider::after {
-    content: '或';
+.divider span {
     background: white;
     padding: 0 20px;
     position: relative;
