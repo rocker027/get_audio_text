@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# 載入多語言支援
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lang/i18n.sh"
+
+# 初始化多語言支援
+if ! init_i18n; then
+    echo "錯誤: 無法初始化多語言支援" >&2
+    exit 1
+fi
+
 # 顏色輸出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,7 +25,7 @@ CONFIG_FILE="$HOME/.get_audio_text_config"
 load_config() {
     if [ -f "$CONFIG_FILE" ]; then
         source "$CONFIG_FILE"
-        echo -e "${GREEN}✅ 載入現有設定: $AUDIO_DIR${NC}"
+        echo -e "${GREEN}$(t MSG_STATUS_SUCCESS) $(t MSG_CONFIG_LOAD): $AUDIO_DIR${NC}"
         return 0
     else
         return 1
@@ -31,27 +41,27 @@ validate_directory() {
     
     # 檢查是否為絕對路徑
     if [[ ! "$dir_path" = /* ]]; then
-        echo -e "${RED}❌ 請提供絕對路徑（以 / 開頭）${NC}"
+        echo -e "${RED}$(t MSG_STATUS_ERROR) $(t MSG_ABSOLUTE_PATH_REQUIRED)${NC}"
         return 1
     fi
     
     # 檢查父目錄是否存在
     local parent_dir=$(dirname "$dir_path")
     if [ ! -d "$parent_dir" ]; then
-        echo -e "${RED}❌ 父目錄不存在: $parent_dir${NC}"
+        echo -e "${RED}$(t MSG_STATUS_ERROR) $(t MSG_PARENT_DIR_NOT_EXIST): $parent_dir${NC}"
         return 1
     fi
     
     # 檢查是否可寫入
     if [ -d "$dir_path" ]; then
         if [ ! -w "$dir_path" ]; then
-            echo -e "${RED}❌ 目錄存在但無寫入權限: $dir_path${NC}"
+            echo -e "${RED}$(t MSG_STATUS_ERROR) $(t MSG_NO_WRITE_PERMISSION): $dir_path${NC}"
             return 1
         fi
     else
         # 目錄不存在，檢查是否可在父目錄建立
         if [ ! -w "$parent_dir" ]; then
-            echo -e "${RED}❌ 無法在父目錄建立新目錄: $parent_dir${NC}"
+            echo -e "${RED}$(t MSG_STATUS_ERROR) $(t MSG_CANNOT_CREATE_DIR): $parent_dir${NC}"
             return 1
         fi
     fi
@@ -64,9 +74,9 @@ initial_setup() {
     # 設定預設路徑
     local DEFAULT_PATH="$HOME/Downloads/AudioCapture"
     
-    echo -e "${BLUE}🎵 歡迎使用音訊轉錄工具！${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${YELLOW}📁 首次使用需要設定下載目錄${NC}"
+    echo -e "${BLUE}🎵 $(t MSG_WELCOME)${NC}"
+    echo -e "${BLUE}$(t MSG_SEPARATOR)${NC}"
+    echo -e "${YELLOW}📁 $(t MSG_FIRST_SETUP)${NC}"
     echo ""
     echo -e "${GREEN}🎯 建議使用預設路徑: $DEFAULT_PATH${NC}"
     echo -e "${BLUE}💡 或選擇其他路徑範例:${NC}"
@@ -82,7 +92,7 @@ initial_setup() {
         # 檢查輸入是否為空，如果為空則使用預設路徑
         if [ -z "$user_audio_dir" ]; then
             user_audio_dir="$DEFAULT_PATH"
-            echo -e "${GREEN}✅ 使用預設路徑: $user_audio_dir${NC}"
+            echo -e "${GREEN}$(t MSG_STATUS_SUCCESS) $(t MSG_USE_DEFAULT_PATH): $user_audio_dir${NC}"
         fi
         
         # 驗證目錄
@@ -93,8 +103,8 @@ initial_setup() {
             # 如果目錄不存在，詢問是否建立
             if [ ! -d "$user_audio_dir" ]; then
                 echo ""
-                echo -e "${YELLOW}⚠️  目錄不存在: $user_audio_dir${NC}"
-                read -p "是否建立此目錄？ (Y/n): " -n 1 -r
+                echo -e "${YELLOW}$(t MSG_STATUS_WARNING)  $(t MSG_DIRECTORY_NOT_EXIST): $user_audio_dir${NC}"
+                read -p "$(t MSG_CREATE_DIRECTORY) " -n 1 -r
                 echo ""
                 
                 if [[ $REPLY =~ ^[Nn]$ ]]; then
@@ -105,9 +115,9 @@ initial_setup() {
                 
                 # 建立目錄
                 if mkdir -p "$user_audio_dir"; then
-                    echo -e "${GREEN}✅ 目錄建立成功${NC}"
+                    echo -e "${GREEN}$(t MSG_STATUS_SUCCESS) $(t MSG_DIRECTORY_CREATED)${NC}"
                 else
-                    echo -e "${RED}❌ 目錄建立失敗${NC}"
+                    echo -e "${RED}$(t MSG_STATUS_ERROR) $(t MSG_DIRECTORY_CREATE_FAILED)${NC}"
                     echo ""
                     continue
                 fi
@@ -131,11 +141,11 @@ WHISPER_MODEL_DIR="$AUDIO_DIR/WhisperModel"
 EOF
             
             echo ""
-            echo -e "${GREEN}🎉 設定完成！${NC}"
-            echo -e "${BLUE}📁 音訊檔案目錄: $AUDIO_DIR${NC}"
-            echo -e "${BLUE}📄 逐字稿目錄: $TRANSCRIPT_DIR${NC}"
-            echo -e "${BLUE}🤖 Whisper 模型目錄: $WHISPER_MODEL_DIR${NC}"
-            echo -e "${GREEN}💾 設定已儲存至: $CONFIG_FILE${NC}"
+            echo -e "${GREEN}🎉 $(t MSG_SETUP_COMPLETE)${NC}"
+            echo -e "${BLUE}📁 $(t MSG_AUDIO_DIR): $AUDIO_DIR${NC}"
+            echo -e "${BLUE}📄 $(t MSG_TRANSCRIPT_DIR): $TRANSCRIPT_DIR${NC}"
+            echo -e "${BLUE}🤖 $(t MSG_WHISPER_MODEL_DIR): $WHISPER_MODEL_DIR${NC}"
+            echo -e "${GREEN}💾 $(t MSG_CONFIG_SAVED): $CONFIG_FILE${NC}"
             echo ""
             break
         else
@@ -170,8 +180,8 @@ check_dependencies() {
     fi
 
     if [ ${#missing_tools[@]} -gt 0 ]; then
-        echo -e "${RED}❌ 缺少必要工具: ${missing_tools[*]}${NC}"
-        echo -e "${YELLOW}安裝方法:${NC}"
+        echo -e "${RED}$(t MSG_STATUS_ERROR) $(t MSG_MISSING_TOOLS): ${missing_tools[*]}${NC}"
+        echo -e "${YELLOW}$(t MSG_INSTALL_METHODS)${NC}"
         echo "brew install yt-dlp ffmpeg"
         echo "pip3 install openai-whisper"
         exit 1
@@ -182,13 +192,13 @@ check_dependencies() {
 check_gemini_cli() {
     # 檢查常見的 gemini 命令
     if command -v gemini &> /dev/null; then
-        echo -e "${GREEN}✅ 偵測到 Gemini CLI，將在轉錄後自動生成總結${NC}"
+        echo -e "${GREEN}$(t MSG_STATUS_SUCCESS) $(t MSG_GEMINI_DETECTED)${NC}"
         return 0
     elif command -v google-generativeai &> /dev/null; then
-        echo -e "${GREEN}✅ 偵測到 Google GenerativeAI CLI，將在轉錄後自動生成總結${NC}"
+        echo -e "${GREEN}$(t MSG_STATUS_SUCCESS) $(t MSG_GEMINI_DETECTED)${NC}"
         return 0
     else
-        echo -e "${BLUE}ℹ️  未偵測到 Gemini CLI，跳過總結功能${NC}"
+        echo -e "${BLUE}$(t MSG_STATUS_INFO)  $(t MSG_GEMINI_NOT_DETECTED)${NC}"
         return 1
     fi
 }
@@ -579,12 +589,12 @@ transcribe_audio_with_rename() {
 }
 
 # 主程式開始
-echo -e "${BLUE}🎵 YouTube/Instagram 音訊下載 + 轉錄一條龍服務${NC}"
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}🎵 $(t MSG_APP_TITLE)${NC}"
+echo -e "${BLUE}$(t MSG_SEPARATOR)${NC}"
 
 # 載入或建立設定
 if ! load_config; then
-    echo -e "${YELLOW}⚠️  未找到設定檔，進入初次設定...${NC}"
+    echo -e "${YELLOW}$(t MSG_STATUS_WARNING)  $(t MSG_CONFIG_NOT_FOUND)${NC}"
     echo ""
     initial_setup
 fi
