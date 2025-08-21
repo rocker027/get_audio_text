@@ -38,7 +38,9 @@ A powerful audio transcription tool with both a command-line and a web interface
 - 🚀 **All-in-One Automation**: From URL to transcript with a single command.
 - 🌐 **Multi-Platform Support**: YouTube, Instagram, TikTok, Facebook, and more.
 - 🎯 **Smart Filename Handling**: Automatically uses the original title for filenames, avoiding special character issues.
-- 🗂️ **Automatic Cleanup**: Deletes audio files after transcription to save space.
+- ⚡ **Dual Engine Support**: faster-whisper (4-5x speed) + OpenAI Whisper with automatic fallback.
+- 🧠 **Smart Hardware Detection**: Automatically suggests optimal model and settings based on your hardware.
+- 💾 **Flexible File Management**: Now defaults to keeping audio files, with option to delete for space saving.
 
 ### 🤖 AI-Enhanced Features
 - 📄 **Multiple Output Formats**: Supports TXT, SRT, and VTT formats.
@@ -56,8 +58,13 @@ brew install yt-dlp
 # Install ffmpeg (audio conversion tool)
 brew install ffmpeg
 
-# Install Whisper (speech recognition tool)
+# Install OpenAI Whisper (speech recognition tool)
 pip3 install openai-whisper
+
+# Install faster-whisper (high-performance engine, recommended)
+python3 -m venv ~/faster-whisper-env
+source ~/faster-whisper-env/bin/activate
+pip install faster-whisper
 ```
 
 ### System Requirements
@@ -165,25 +172,34 @@ The web interface is recommended for a more intuitive experience:
 # Only download audio, no transcription
 ./get_audio_text.sh "URL" --no-transcribe
 
-# Keep the audio file after transcription
+# Keep the audio file after transcription (default behavior)
 ./get_audio_text.sh "URL" --keep-audio
+
+# Delete audio file after transcription to save space
+./get_audio_text.sh "URL" --delete-audio
 
 # Skip AI summary
 ./get_audio_text.sh "URL" --no-summary
 
-# Specify Whisper model (default is small)
-./get_audio_text.sh "URL" --model base
-./get_audio_text.sh "URL" --model medium
+# Specify Whisper model (default is medium)
+./get_audio_text.sh "URL" --model large
+./get_audio_text.sh "URL" --model small
+
+# Engine and performance options
+./get_audio_text.sh "URL" --engine faster --model large
+./get_audio_text.sh "URL" --engine openai --model medium
+./get_audio_text.sh "URL" --compute-type int8 --device cpu
 
 # Combine options
-./get_audio_text.sh "URL" --model small --keep-audio --no-summary
+./get_audio_text.sh "URL" --model large --engine faster --delete-audio --no-summary
 ```
 
 ## 📁 Project Structure
 
 ```
 get-audio-text/
-├── 📄 get_audio_text.sh          # Main transcription script
+├── 📄 get_audio_text.sh          # Main transcription script (enhanced with dual-engine support)
+├── 📄 benchmark_engines.sh       # Performance testing script
 ├── 📄 README.md                 # Project documentation (English)
 ├── 📄 README.zh-TW.md           # Project documentation (Traditional Chinese)
 ├── 📄 .gitignore                 # Git ignore settings
@@ -209,10 +225,10 @@ get-audio-text/
 │   ├── Video Title.txt          # Plain text transcript
 │   ├── Video Title.srt          # Subtitle format (with timestamps)
 │   ├── Video Title.vtt          # WebVTT format
-│   └── Video Title_summary.txt  # AI-generated summary
-├── 📂 WhisperModel/             # Whisper model cache
-│   └── [model_name].pt          # Downloaded model file
-└── Video Title.mp3              # Audio file (optional, can be kept)
+│   └── Video Title_summary.md   # AI-generated summary
+├── 📂 WhisperModel/             # Whisper model cache (for both engines)
+│   └── [model_name].pt          # Downloaded model files
+└── Video Title.mp3              # Audio file (now kept by default)
 ```
 
 ## 💡 Usage Examples
@@ -254,7 +270,7 @@ get-audio-text/
 **Output:**
 - Full transcript files (3 formats)
 - AI smart summary
-- The original audio file (because of --keep-audio)
+- The original audio file (kept by default)
 
 #### Process Local Files
 
@@ -275,9 +291,13 @@ get-audio-text/
 
 | Argument | Description | Example |
 |---|---|---|
-| `--model [model_name]` | Specify Whisper model (tiny, base, small, medium, large). Default: `small` | `./get_audio_text.sh "URL" --model base` |
+| `--model [model_name]` | Specify Whisper model (tiny, base, small, medium, large). Default: `medium` | `./get_audio_text.sh "URL" --model large` |
+| `--engine [faster\|openai]` | Choose transcription engine. Default: `faster` | `./get_audio_text.sh "URL" --engine faster` |
+| `--compute-type [int8\|float16\|float32]` | Set computation precision. Default: `float32` | `./get_audio_text.sh "URL" --compute-type int8` |
+| `--device [cpu\|cuda\|auto]` | Specify computation device. Default: `auto` | `./get_audio_text.sh "URL" --device cpu` |
 | `--no-transcribe` | Only download audio, skip transcription | `./get_audio_text.sh "URL" --no-transcribe` |
-| `--keep-audio` | Keep the audio file after transcription | `./get_audio_text.sh "URL" --keep-audio` |
+| `--keep-audio` | Keep the audio file after transcription (default behavior) | `./get_audio_text.sh "URL" --keep-audio` |
+| `--delete-audio` | Delete audio file after transcription to save space | `./get_audio_text.sh "URL" --delete-audio` |
 | `--no-summary` | Skip generating AI summary | `./get_audio_text.sh "URL" --no-summary` |
 
 ### Whisper Model Comparison
@@ -286,9 +306,16 @@ get-audio-text/
 |---|---|---|---|---|
 | `tiny` | ~39 MB | Fastest | Low | Quick tests |
 | `base` | ~74 MB | Fast | Fair | Everyday use |
-| `small` | ~244 MB | Medium | Good | **Recommended Default** |
-| `medium` | ~769 MB | Slow | Very Good | High-quality needs |
-| `large` | ~1550 MB | Slowest | Best | Professional use |
+| `small` | ~244 MB | Fast | Good | Speed-focused use |
+| `medium` | ~769 MB | Medium | Very Good | **Recommended Default** |
+| `large` | ~1550 MB | Slow | Best | High-accuracy needs |
+
+### Engine Performance Comparison
+
+| Engine | Speed Improvement | Memory Usage | Compatibility | Best For |
+|---|---|---|---|---|
+| **faster-whisper** | 4-5x faster | Lower | CPU/GPU | **Recommended** |
+| **OpenAI Whisper** | Baseline | Higher | Universal | Fallback/compatibility |
 
 ### Web Interface Options
 
@@ -327,6 +354,48 @@ get-audio-text/
 2.  **Local Video** → Extract Audio → Whisper Transcription → AI Summary
 3.  **Local Audio** → Whisper Transcription → AI Summary
 4.  **Transcript File** → Direct AI Summary
+
+## 🧪 Performance Testing
+
+### Engine Benchmark Tool
+
+The project includes a benchmark script to compare performance between faster-whisper and OpenAI Whisper engines:
+
+```bash
+# Run performance comparison
+./benchmark_engines.sh "https://www.youtube.com/watch?v=VIDEO_ID"
+
+# Or test with a local file
+./benchmark_engines.sh "/path/to/audio.mp3"
+```
+
+### What the Benchmark Tests
+
+- **Speed Comparison**: Measures transcription time for both engines
+- **Accuracy Analysis**: Compares output quality and completeness
+- **Resource Usage**: Monitors CPU and memory consumption
+- **Model Performance**: Tests different Whisper model sizes
+
+### Sample Benchmark Results
+
+```
+=== Engine Performance Comparison ===
+Audio: Sample Video (60 seconds)
+Hardware: 10-core CPU, 68GB RAM
+
+faster-whisper (medium, float32):  1.78s  (33.7x realtime)
+OpenAI Whisper (medium):          7.85s  (7.6x realtime)
+
+Speed Improvement: 4.4x faster
+```
+
+### Hardware Optimization Tips
+
+The script automatically detects your hardware and suggests optimal settings:
+
+- **CPU-only systems**: Recommends float32 precision, medium model
+- **GPU systems**: Suggests CUDA acceleration with appropriate precision
+- **Memory constraints**: Automatically downgrades to smaller models if needed
 
 ## 🔧 Advanced Configuration
 

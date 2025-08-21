@@ -962,7 +962,7 @@ check_dependencies
 
 URL=""
 NO_TRANSCRIBE=false
-KEEP_AUDIO=false
+KEEP_AUDIO=true
 OPEN_FOLDER=false
 NO_SUMMARY=false
 
@@ -991,6 +991,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --keep-audio)
             KEEP_AUDIO=true
+            shift
+            ;;
+        --delete-audio)
+            KEEP_AUDIO=false
             shift
             ;;
         --open-folder)
@@ -1049,7 +1053,8 @@ if [ -z "$URL" ]; then
     echo -e "${YELLOW}參數說明:${NC}"
     echo "• --model [model_name]: 指定 Whisper 模型 (tiny, base, small, medium, large)，預設: medium"
     echo "• --no-transcribe:      僅下載音訊，不進行轉錄"
-    echo "• --keep-audio:         轉錄完成後保留音訊檔案"
+    echo "• --keep-audio:         保留音訊檔案 (預設行為)"
+    echo "• --delete-audio:       轉錄完成後刪除音訊檔案以節省空間"
     echo "• --open-folder:        完成後詢問是否開啟資料夾"
     echo ""
     echo -e "${YELLOW}引擎選擇選項:${NC}"
@@ -1079,7 +1084,7 @@ if [ -z "$URL" ]; then
     echo ""
     echo -e "${BLUE}輸出位置:${NC}"
     echo "• 逐字稿: $TRANSCRIPT_DIR"
-    echo "• 音訊檔案: 轉錄成功後自動刪除（除非使用 --keep-audio）"
+    echo "• 音訊檔案: $AUDIO_DIR (預設保留，使用 --delete-audio 可刪除)"
     exit 1
 fi
 

@@ -38,7 +38,9 @@
 - 🚀 **一站式自動化**：從 URL 到逐字稿，一個指令搞定。
 - 🌐 **多平台支援**：YouTube、Instagram、TikTok、Facebook 等。
 - 🎯 **智能檔名處理**：自動使用原始標題作為檔名，避免特殊字元問題。
-- 🗂️ **自動清理**：轉錄完成後自動刪除音訊檔案，節省空間。
+- ⚡ **雙引擎支援**：faster-whisper（快 4-5 倍）+ OpenAI Whisper 自動回退機制。
+- 🧠 **智能硬體偵測**：根據您的硬體自動建議最佳模型和設定。
+- 💾 **彈性檔案管理**：現在預設保留音訊檔案，可選擇刪除以節省空間。
 
 ### 🤖 AI 增強功能
 - 📄 **多種輸出格式**：支援 TXT、SRT 和 VTT 格式。
@@ -56,8 +58,13 @@ brew install yt-dlp
 # 安裝 ffmpeg（音訊轉換工具）
 brew install ffmpeg
 
-# 安裝 Whisper（語音識別工具）
+# 安裝 OpenAI Whisper（語音識別工具）
 pip3 install openai-whisper
+
+# 安裝 faster-whisper（高效能引擎，建議使用）
+python3 -m venv ~/faster-whisper-env
+source ~/faster-whisper-env/bin/activate
+pip install faster-whisper
 ```
 
 ### 系統要求
@@ -165,25 +172,34 @@ python3 -m http.server 8000 --cgi
 # 僅下載音訊，不轉錄
 ./get_audio_text.sh "URL" --no-transcribe
 
-# 轉錄完成後保留音訊檔案
+# 轉錄完成後保留音訊檔案（預設行為）
 ./get_audio_text.sh "URL" --keep-audio
+
+# 刪除音訊檔案以節省空間
+./get_audio_text.sh "URL" --delete-audio
 
 # 跳過 AI 總結
 ./get_audio_text.sh "URL" --no-summary
 
-# 指定 Whisper 模型（預設為 small）
-./get_audio_text.sh "URL" --model base
-./get_audio_text.sh "URL" --model medium
+# 指定 Whisper 模型（預設為 medium）
+./get_audio_text.sh "URL" --model large
+./get_audio_text.sh "URL" --model small
+
+# 引擎和效能選項
+./get_audio_text.sh "URL" --engine faster --model large
+./get_audio_text.sh "URL" --engine openai --model medium
+./get_audio_text.sh "URL" --compute-type int8 --device cpu
 
 # 組合選項
-./get_audio_text.sh "URL" --model small --keep-audio --no-summary
+./get_audio_text.sh "URL" --model large --engine faster --delete-audio --no-summary
 ```
 
 ## 📁 專案結構
 
 ```
 get-audio-text/
-├── 📄 get_audio_text.sh          # 主要轉錄腳本
+├── 📄 get_audio_text.sh          # 主要轉錄腳本（增強雙引擎支援）
+├── 📄 benchmark_engines.sh       # 效能測試腳本
 ├── 📄 README.md                 # 專案說明文件（英文）
 ├── 📄 README.zh-TW.md           # 專案說明文件（繁體中文）
 ├── 📄 .gitignore                 # Git 忽略設定
@@ -210,9 +226,9 @@ get-audio-text/
 │   ├── 影片標題.srt             # 字幕格式（帶時間戳）
 │   ├── 影片標題.vtt             # WebVTT 格式
 │   └── 影片標題_summary.txt      # AI 生成的總結
-├── 📂 WhisperModel/             # Whisper 模型快取
+├── 📂 WhisperModel/             # Whisper 模型快取（雙引擎支援）
 │   └── [model_name].pt          # 下載的模型檔案
-└── 影片標題.mp3                 # 音訊檔案（可選保留）
+└── 影片標題.mp3                 # 音訊檔案（現在預設保留）
 ```
 
 ## 💡 使用範例
@@ -275,9 +291,13 @@ get-audio-text/
 
 | 參數 | 說明 | 範例 |
 |---|---|---|
-| `--model [model_name]` | 指定 Whisper 模型 (tiny, base, small, medium, large)。預設：`small` | `./get_audio_text.sh "URL" --model base` |
+| `--model [model_name]` | 指定 Whisper 模型 (tiny, base, small, medium, large)。預設：`medium` | `./get_audio_text.sh "URL" --model large` |
+| `--engine [faster\|openai]` | 選擇轉錄引擎。預設：`faster` | `./get_audio_text.sh "URL" --engine faster` |
+| `--compute-type [int8\|float16\|float32]` | 設定計算精度。預設：`float32` | `./get_audio_text.sh "URL" --compute-type int8` |
+| `--device [cpu\|cuda\|auto]` | 指定計算裝置。預設：`auto` | `./get_audio_text.sh "URL" --device cpu` |
 | `--no-transcribe` | 僅下載音訊，跳過轉錄 | `./get_audio_text.sh "URL" --no-transcribe` |
-| `--keep-audio` | 轉錄後保留音訊檔案 | `./get_audio_text.sh "URL" --keep-audio` |
+| `--keep-audio` | 轉錄後保留音訊檔案（預設行為） | `./get_audio_text.sh "URL" --keep-audio` |
+| `--delete-audio` | 轉錄後刪除音訊檔案以節省空間 | `./get_audio_text.sh "URL" --delete-audio` |
 | `--no-summary` | 跳過生成 AI 總結 | `./get_audio_text.sh "URL" --no-summary` |
 
 ### Whisper 模型比較
@@ -286,9 +306,16 @@ get-audio-text/
 |---|---|---|---|---|
 | `tiny` | ~39 MB | 最快 | 較低 | 快速測試 |
 | `base` | ~74 MB | 快 | 一般 | 日常使用 |
-| `small` | ~244 MB | 中等 | 良好 | **推薦預設** |
-| `medium` | ~769 MB | 慢 | 很好 | 高品質需求 |
-| `large` | ~1550 MB | 最慢 | 最佳 | 專業用途 |
+| `small` | ~244 MB | 快 | 良好 | 速度導向使用 |
+| `medium` | ~769 MB | 中等 | 很好 | **推薦預設** |
+| `large` | ~1550 MB | 慢 | 最佳 | 高準確度需求 |
+
+### 引擎效能比較
+
+| 引擎 | 速度提升 | 記憶體使用 | 相容性 | 最適合 |
+|---|---|---|---|---|
+| **faster-whisper** | 快 4-5 倍 | 較低 | CPU/GPU | **建議使用** |
+| **OpenAI Whisper** | 基準線 | 較高 | 通用 | 回退/相容性 |
 
 ### Web 介面選項
 
@@ -327,6 +354,48 @@ get-audio-text/
 2.  **本地影片** → 提取音訊 → Whisper 轉錄 → AI 總結
 3.  **本地音訊** → Whisper 轉錄 → AI 總結
 4.  **逐字稿檔案** → 直接 AI 總結
+
+## 🧪 效能測試
+
+### 引擎效能基準測試工具
+
+專案包含效能基準測試腳本，可比較 faster-whisper 和 OpenAI Whisper 引擎的效能：
+
+```bash
+# 執行效能比較
+./benchmark_engines.sh "https://www.youtube.com/watch?v=VIDEO_ID"
+
+# 或測試本地檔案
+./benchmark_engines.sh "/path/to/audio.mp3"
+```
+
+### 基準測試內容
+
+- **速度比較**：測量兩個引擎的轉錄時間
+- **準確度分析**：比較輸出品質和完整性
+- **資源使用**：監控 CPU 和記憶體消耗
+- **模型效能**：測試不同 Whisper 模型大小
+
+### 範例基準測試結果
+
+```
+=== 引擎效能比較 ===
+音訊：範例影片（60 秒）
+硬體：10 核心 CPU，68GB RAM
+
+faster-whisper (medium, float32)：1.78 秒（33.7 倍實時）
+OpenAI Whisper (medium)：7.85 秒（7.6 倍實時）
+
+速度提升：快 4.4 倍
+```
+
+### 硬體最佳化建議
+
+腳本會自動偵測您的硬體並建議最佳設定：
+
+- **僅 CPU 系統**：建議 float32 精度，medium 模型
+- **GPU 系統**：建議 CUDA 加速與適當精度
+- **記憶體限制**：若需要會自動降級到較小模型
 
 ## 🔧 進階設定
 
