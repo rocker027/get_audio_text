@@ -138,6 +138,14 @@ initial_setup() {
 AUDIO_DIR="$AUDIO_DIR"
 TRANSCRIPT_DIR="$AUDIO_DIR/Transcripts"
 WHISPER_MODEL_DIR="$AUDIO_DIR/WhisperModel"
+
+# Whisper 引擎設定
+WHISPER_ENGINE="faster"  # faster 或 openai
+WHISPER_COMPUTE_TYPE="float32"  # int8, float16, float32
+WHISPER_DEVICE="auto"  # cpu, cuda, auto
+
+# Faster-whisper 虛擬環境路徑
+FASTER_WHISPER_VENV="$HOME/faster-whisper-env"
 EOF
             
             echo ""
@@ -160,7 +168,13 @@ EOF
 AUDIO_DIR=""
 TRANSCRIPT_DIR=""
 WHISPER_MODEL_DIR=""
-WHISPER_MODEL_NAME="small" # 預設模型，可被 --model 參數覆寫
+WHISPER_MODEL_NAME="medium" # 預設模型（平衡速度與品質），可被 --model 參數覆寫
+
+# Whisper 引擎預設值
+WHISPER_ENGINE="faster"  # 預設使用 faster-whisper
+WHISPER_COMPUTE_TYPE="float32"  # 改用 float32 以獲得最佳效能
+WHISPER_DEVICE="auto" 
+FASTER_WHISPER_VENV="$HOME/faster-whisper-env"
 
 # 檢查必要工具
 check_dependencies() {
@@ -186,6 +200,120 @@ check_dependencies() {
         echo "pip3 install openai-whisper"
         exit 1
     fi
+}
+
+# 硬體性能偵測和模型建議
+detect_hardware_and_suggest_model() {
+    local cpu_cores=$(sysctl -n hw.ncpu 2>/dev/null || echo "4")
+    local total_memory_gb=$(( $(sysctl -n hw.memsize 2>/dev/null || echo "8000000000") / 1000000000 ))
+    
+    echo -e "${BLUE}🔍 硬體偵測結果:${NC}"
+    echo -e "${BLUE}CPU 核心數: $cpu_cores${NC}"
+    echo -e "${BLUE}總記憶體: ${total_memory_gb}GB${NC}"
+    
+    # 根據硬體條件提供建議
+    if [ "$total_memory_gb" -ge 16 ] && [ "$cpu_cores" -ge 8 ]; then
+        echo -e "${GREEN}💪 高性能硬體偵測到，建議使用 large 模型以獲得最佳辨識率${NC}"
+        if [ "$WHISPER_MODEL_NAME" = "small" ] || [ "$WHISPER_MODEL_NAME" = "medium" ]; then
+            echo -e "${YELLOW}💡 考慮使用 --model large 以獲得更好的辨識效果${NC}"
+        fi
+    elif [ "$total_memory_gb" -ge 8 ] && [ "$cpu_cores" -ge 4 ]; then
+        echo -e "${GREEN}⚖️  中等硬體配置，medium 模型是最佳平衡選擇${NC}"
+        if [ "$WHISPER_MODEL_NAME" = "small" ]; then
+            echo -e "${YELLOW}💡 建議升級到 --model medium 以獲得更好的辨識率${NC}"
+        fi
+    else
+        echo -e "${YELLOW}🔋 有限硬體配置，建議使用 small 或 base 模型以確保流暢性${NC}"
+        if [ "$WHISPER_MODEL_NAME" = "large" ] || [ "$WHISPER_MODEL_NAME" = "medium" ]; then
+            echo -e "${YELLOW}💡 考慮使用 --model small 以獲得更快的處理速度${NC}"
+        fi
+    fi
+    echo ""
+}
+
+# 檢查 Whisper 引擎可用性
+check_whisper_engines() {
+    local faster_available=false
+    local openai_available=false
+    
+    echo -e "${BLUE}🔍 檢查 Whisper 引擎可用性...${NC}"
+    
+    # 硬體性能偵測
+    detect_hardware_and_suggest_model
+    
+    # 檢查 faster-whisper
+    if [ -d "$FASTER_WHISPER_VENV" ]; then
+        if source "$FASTER_WHISPER_VENV/bin/activate" && python3 -c "from faster_whisper import WhisperModel" &> /dev/null; then
+            faster_available=true
+            echo -e "${GREEN}✅ faster-whisper 可用${NC}"
+        else
+            echo -e "${YELLOW}⚠️  faster-whisper 虛擬環境存在但無法載入${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠️  faster-whisper 虛擬環境不存在: $FASTER_WHISPER_VENV${NC}"
+    fi
+    
+    # 檢查 OpenAI whisper
+    if command -v whisper &> /dev/null || [ -f "/Users/rocker/Library/Python/3.9/bin/whisper" ]; then
+        openai_available=true
+        echo -e "${GREEN}✅ OpenAI whisper 可用${NC}"
+    else
+        echo -e "${YELLOW}⚠️  OpenAI whisper 不可用${NC}"
+    fi
+    
+    # 根據可用性和用戶偏好決定使用哪個引擎
+    if [ "$WHISPER_ENGINE" = "faster" ] && [ "$faster_available" = true ]; then
+        echo -e "${GREEN}🎯 將使用 faster-whisper 引擎${NC}"
+        return 0  # 使用 faster-whisper
+    elif [ "$WHISPER_ENGINE" = "openai" ] && [ "$openai_available" = true ]; then
+        echo -e "${GREEN}🎯 將使用 OpenAI whisper 引擎${NC}"
+        return 1  # 使用 OpenAI whisper
+    elif [ "$faster_available" = true ]; then
+        echo -e "${YELLOW}⚠️  偏好引擎不可用，自動選用 faster-whisper${NC}"
+        return 0  # 回退到 faster-whisper
+    elif [ "$openai_available" = true ]; then
+        echo -e "${YELLOW}⚠️  偏好引擎不可用，自動選用 OpenAI whisper${NC}"
+        return 1  # 回退到 OpenAI whisper
+    else
+        echo -e "${RED}❌ 沒有可用的 Whisper 引擎${NC}"
+        return 2  # 錯誤
+    fi
+}
+
+# 統一轉錄介面（引擎選擇邏輯）
+transcribe_with_engine_selection() {
+    local audio_file="$1"
+    local original_name="$2"
+    local keep_audio="$3"
+    
+    # 檢查引擎可用性
+    check_whisper_engines
+    local engine_status=$?
+    
+    case $engine_status in
+        0)  # 使用 faster-whisper
+            echo -e "${BLUE}🚀 使用 faster-whisper 進行轉錄${NC}"
+            if fast_transcribe_audio_with_rename "$audio_file" "$original_name" "$keep_audio"; then
+                return 0
+            else
+                echo -e "${YELLOW}🔄 faster-whisper 失敗，回退至 OpenAI whisper${NC}"
+                transcribe_audio_with_rename "$audio_file" "$original_name" "$keep_audio"
+                return $?
+            fi
+            ;;
+        1)  # 使用 OpenAI whisper
+            echo -e "${BLUE}🎵 使用 OpenAI whisper 進行轉錄${NC}"
+            transcribe_audio_with_rename "$audio_file" "$original_name" "$keep_audio"
+            return $?
+            ;;
+        2)  # 無可用引擎
+            echo -e "${RED}❌ 無法找到可用的 Whisper 引擎${NC}"
+            echo -e "${YELLOW}💡 請確認以下其中一個引擎已正確安裝:${NC}"
+            echo "1. faster-whisper: 運行 'pip3 install faster-whisper' 在虛擬環境中"
+            echo "2. OpenAI whisper: 運行 'pip3 install openai-whisper'"
+            return 1
+            ;;
+    esac
 }
 
 # 檢查 Gemini CLI 是否可用
@@ -456,6 +584,228 @@ generate_summary_with_gemini() {
     fi
 }
 
+# 使用 faster-whisper 轉錄音訊為文字並重新命名逐字稿
+fast_transcribe_audio_with_rename() {
+    local audio_file="$1"
+    local original_name="$2"
+    local keep_audio="$3"
+    
+    echo -e "${PURPLE}⚡ 使用 faster-whisper 開始轉錄音訊...${NC}"
+    
+    # 清理檔名中的特殊字元
+    local clean_name=$(echo "$original_name" | sed 's/[<>:"/\\|?*]/_/g')
+    local temp_base_name=$(basename "$audio_file" .mp3)
+    
+    # 檢查檔案是否存在
+    if [ ! -f "$audio_file" ]; then
+        echo -e "${RED}❌ 音訊檔案不存在: $audio_file${NC}"
+        return 1
+    fi
+    
+    echo -e "${BLUE}📁 暫時檔案: $(basename "$audio_file")${NC}"
+    echo -e "${BLUE}🏷️  目標名稱: $original_name${NC}"
+    echo -e "${BLUE}🤖 使用模型: $WHISPER_MODEL_NAME${NC}"
+    echo -e "${BLUE}⚙️  計算精度: $WHISPER_COMPUTE_TYPE${NC}"
+    
+    # 檢查 faster-whisper 虛擬環境是否存在
+    if [ ! -d "$FASTER_WHISPER_VENV" ]; then
+        echo -e "${RED}❌ Faster-whisper 虛擬環境不存在: $FASTER_WHISPER_VENV${NC}"
+        echo -e "${YELLOW}🔄 回退至 OpenAI Whisper${NC}"
+        return 1
+    fi
+    
+    # 創建 Python 轉錄腳本
+    local python_script="/tmp/faster_whisper_transcribe_$$_$(date +%s).py"
+    
+    cat > "$python_script" << 'EOF'
+import sys
+import os
+from faster_whisper import WhisperModel
+
+def transcribe_audio(audio_path, model_size, compute_type, device, output_dir):
+    try:
+        print(f"🔄 載入 faster-whisper 模型: {model_size}")
+        model = WhisperModel(model_size, 
+                           device=device, 
+                           compute_type=compute_type,
+                           download_root=os.environ.get('WHISPER_MODEL_DIR'))
+        
+        print(f"🎙️  開始轉錄: {os.path.basename(audio_path)}")
+        segments, info = model.transcribe(
+            audio_path,
+            language="zh",  # 中文
+            vad_filter=True,  # 語音活動檢測
+            vad_parameters=dict(min_silence_duration_ms=500)
+        )
+        
+        print(f"📊 偵測語言: {info.language} (信心度: {info.language_probability:.2f})")
+        
+        # 準備輸出檔案名稱
+        base_name = os.path.splitext(os.path.basename(audio_path))[0]
+        
+        # 生成 TXT 格式
+        txt_path = os.path.join(output_dir, f"{base_name}.txt")
+        with open(txt_path, 'w', encoding='utf-8') as f:
+            for segment in segments:
+                f.write(f"{segment.text.strip()}\n")
+        print(f"✅ TXT 格式完成: {os.path.basename(txt_path)}")
+        
+        # 重新轉錄以生成時間戳（需要重新執行，因為 segments 是生成器）
+        segments, _ = model.transcribe(
+            audio_path,
+            language="zh",
+            vad_filter=True,
+            vad_parameters=dict(min_silence_duration_ms=500)
+        )
+        
+        # 生成 SRT 格式
+        srt_path = os.path.join(output_dir, f"{base_name}.srt")
+        with open(srt_path, 'w', encoding='utf-8') as f:
+            for i, segment in enumerate(segments, 1):
+                start_time = format_timestamp_srt(segment.start)
+                end_time = format_timestamp_srt(segment.end)
+                f.write(f"{i}\n{start_time} --> {end_time}\n{segment.text.strip()}\n\n")
+        print(f"✅ SRT 格式完成: {os.path.basename(srt_path)}")
+        
+        # 重新轉錄以生成 VTT（需要重新執行）
+        segments, _ = model.transcribe(
+            audio_path,
+            language="zh",
+            vad_filter=True,
+            vad_parameters=dict(min_silence_duration_ms=500)
+        )
+        
+        # 生成 VTT 格式
+        vtt_path = os.path.join(output_dir, f"{base_name}.vtt")
+        with open(vtt_path, 'w', encoding='utf-8') as f:
+            f.write("WEBVTT\n\n")
+            for segment in segments:
+                start_time = format_timestamp_vtt(segment.start)
+                end_time = format_timestamp_vtt(segment.end)
+                f.write(f"{start_time} --> {end_time}\n{segment.text.strip()}\n\n")
+        print(f"✅ VTT 格式完成: {os.path.basename(vtt_path)}")
+        
+        return 0
+        
+    except Exception as e:
+        print(f"❌ faster-whisper 轉錄失敗: {str(e)}")
+        return 1
+
+def format_timestamp_srt(seconds):
+    """格式化時間戳為 SRT 格式"""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    millisecs = int((seconds % 1) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{millisecs:03d}"
+
+def format_timestamp_vtt(seconds):
+    """格式化時間戳為 VTT 格式"""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
+
+if __name__ == "__main__":
+    if len(sys.argv) != 6:
+        print("使用方法: python script.py <audio_path> <model_size> <compute_type> <device> <output_dir>")
+        sys.exit(1)
+    
+    audio_path, model_size, compute_type, device, output_dir = sys.argv[1:6]
+    exit_code = transcribe_audio(audio_path, model_size, compute_type, device, output_dir)
+    sys.exit(exit_code)
+EOF
+    
+    # 執行 faster-whisper 轉錄
+    source "$FASTER_WHISPER_VENV/bin/activate" && \
+    WHISPER_MODEL_DIR="$WHISPER_MODEL_DIR" python3 "$python_script" \
+        "$audio_file" \
+        "$WHISPER_MODEL_NAME" \
+        "$WHISPER_COMPUTE_TYPE" \
+        "$WHISPER_DEVICE" \
+        "$TRANSCRIPT_DIR"
+    
+    local transcribe_result=$?
+    
+    # 清理臨時腳本
+    rm -f "$python_script"
+    
+    if [ $transcribe_result -eq 0 ]; then
+        echo -e "${GREEN}✅ faster-whisper 轉錄完成！${NC}"
+        
+        # 重新命名逐字稿檔案
+        for ext in txt srt vtt; do
+            if [ -f "$TRANSCRIPT_DIR/$temp_base_name.$ext" ]; then
+                local new_transcript_file="$TRANSCRIPT_DIR/${clean_name}.$ext"
+                mv "$TRANSCRIPT_DIR/$temp_base_name.$ext" "$new_transcript_file"
+                echo -e "${GREEN}📄 ${clean_name}.$ext${NC}"
+            fi
+        done
+        
+        # 處理音訊檔案
+        if [ "$keep_audio" = true ]; then
+            # 保留音訊檔案，重新命名為原始名稱
+            local final_audio_file="$AUDIO_DIR/${clean_name}.mp3"
+            mv "$audio_file" "$final_audio_file"
+            echo -e "${BLUE}💾 音訊檔案重新命名為: $(basename "$final_audio_file")${NC}"
+        else
+            # 刪除音訊檔案
+            echo -e "${YELLOW}🗑️  清理暫時音訊檔案...${NC}"
+            if rm "$audio_file"; then
+                echo -e "${GREEN}✅ 暫時音訊檔案已刪除${NC}"
+                echo -e "${BLUE}💾 節省儲存空間，僅保留逐字稿${NC}"
+            else
+                echo -e "${RED}❌ 無法刪除音訊檔案: $(basename "$audio_file")${NC}"
+            fi
+        fi
+        
+        # AI 分析功能 - 支援多種格式
+        local transcript_file=""
+        local use_temp_file=false
+        
+        # 按優先級檢查檔案格式
+        if [ -f "$TRANSCRIPT_DIR/${clean_name}.txt" ]; then
+            transcript_file="$TRANSCRIPT_DIR/${clean_name}.txt"
+            echo -e "${BLUE}📄 使用 TXT 格式逐字稿進行 AI 分析${NC}"
+        elif [ -f "$TRANSCRIPT_DIR/${clean_name}.vtt" ]; then
+            local temp_txt="/tmp/${clean_name}_extracted.txt"
+            if extract_text_from_subtitle "$TRANSCRIPT_DIR/${clean_name}.vtt" "$temp_txt"; then
+                transcript_file="$temp_txt"
+                use_temp_file=true
+                echo -e "${BLUE}📄 從 VTT 格式提取文字進行 AI 分析${NC}"
+            fi
+        elif [ -f "$TRANSCRIPT_DIR/${clean_name}.srt" ]; then
+            local temp_txt="/tmp/${clean_name}_extracted.txt"
+            if extract_text_from_subtitle "$TRANSCRIPT_DIR/${clean_name}.srt" "$temp_txt"; then
+                transcript_file="$temp_txt"
+                use_temp_file=true
+                echo -e "${BLUE}📄 從 SRT 格式提取文字進行 AI 分析${NC}"
+            fi
+        fi
+        
+        if [ -n "$transcript_file" ] && [ -f "$transcript_file" ]; then
+            # 執行 Gemini 總結（如果未被跳過）
+            if [ "$NO_SUMMARY" = false ] && check_gemini_cli; then
+                echo ""
+                generate_summary_with_gemini "$transcript_file" "$original_name"
+            fi
+            
+            # 清理臨時檔案
+            if [ "$use_temp_file" = true ] && [ -f "$transcript_file" ]; then
+                rm -f "$transcript_file"
+            fi
+        else
+            echo -e "${YELLOW}⚠️  找不到可用的逐字稿檔案，跳過 AI 分析${NC}"
+            echo -e "${BLUE}ℹ️  支援格式: .txt, .vtt, .srt${NC}"
+        fi
+        
+        return 0
+    else
+        echo -e "${RED}❌ faster-whisper 轉錄失敗${NC}"
+        echo -e "${YELLOW}🔄 將回退至 OpenAI Whisper${NC}"
+        return 1
+    fi
+}
 
 # 轉錄音訊為文字並重新命名逐字稿
 transcribe_audio_with_rename() {
@@ -651,6 +1001,18 @@ while [[ $# -gt 0 ]]; do
             NO_SUMMARY=true
             shift
             ;;
+        --engine)
+            WHISPER_ENGINE="$2"
+            shift 2
+            ;;
+        --device)
+            WHISPER_DEVICE="$2"
+            shift 2
+            ;;
+        --compute-type)
+            WHISPER_COMPUTE_TYPE="$2"
+            shift 2
+            ;;
         -*)
             # 忽略未知選項，因為它可能是檔名的一部分
             shift
@@ -685,10 +1047,15 @@ if [ -z "$URL" ]; then
     echo "• 逐字稿檔案 → 直接 AI 分析"
     echo ""
     echo -e "${YELLOW}參數說明:${NC}"
-    echo "• --model [model_name]: 指定 Whisper 模型 (tiny, base, small, medium, large)，預設: small"
+    echo "• --model [model_name]: 指定 Whisper 模型 (tiny, base, small, medium, large)，預設: medium"
     echo "• --no-transcribe:      僅下載音訊，不進行轉錄"
     echo "• --keep-audio:         轉錄完成後保留音訊檔案"
     echo "• --open-folder:        完成後詢問是否開啟資料夾"
+    echo ""
+    echo -e "${YELLOW}引擎選擇選項:${NC}"
+    echo "• --engine [faster|openai]: 指定 Whisper 引擎 (預設: faster)"
+    echo "• --device [cpu|cuda|auto]: 指定運算裝置 (預設: auto)" 
+    echo "• --compute-type [int8|float16|float32]: 計算精度 (預設: float32)"
     echo ""
     echo -e "${YELLOW}AI 分析選項:${NC}"
     echo "• --no-summary:         跳過 Gemini AI 總結生成"
@@ -964,7 +1331,7 @@ if [ "$IS_FILE" = true ] || [ "$DOWNLOAD_SUCCESS" = true ]; then
 
         if [ "$KEEP_AUDIO" = true ]; then
             # 轉錄但保留音訊
-            if transcribe_audio_with_rename "$TEMP_AUDIO_FILE" "$ORIGINAL_NAME" true; then
+            if transcribe_with_engine_selection "$TEMP_AUDIO_FILE" "$ORIGINAL_NAME" true; then
                 echo ""
                 echo -e "${GREEN}🎉 一條龍處理完成！${NC}"
                 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -975,7 +1342,7 @@ if [ "$IS_FILE" = true ] || [ "$DOWNLOAD_SUCCESS" = true ]; then
             fi
         else
             # 轉錄並刪除音訊
-            if transcribe_audio_with_rename "$TEMP_AUDIO_FILE" "$ORIGINAL_NAME" false; then
+            if transcribe_with_engine_selection "$TEMP_AUDIO_FILE" "$ORIGINAL_NAME" false; then
                 echo ""
                 echo -e "${GREEN}🎉 一條龍處理完成！${NC}"
                 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
